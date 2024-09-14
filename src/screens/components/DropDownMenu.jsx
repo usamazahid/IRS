@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, Text, ActivityIndicator, View, Image, TouchableOpacity } from 'react-native';
+import { SafeAreaView, Text, ActivityIndicator, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SelectCountry } from 'react-native-element-dropdown'; // Update to your dropdown component
 
 const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placeholder, onItemSelect }) => {
@@ -55,11 +55,12 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
   return (
     <SafeAreaView className="flex-1 justify-center items-center pt-4 mb-4">
       <SelectCountry
-        className="m-4 h-12 p-2 w-full bg-white"
-        selectedTextStyle="text-base ml-2"
-        placeholderStyle="text-base"
-        imageStyle="w-6 h-6 rounded-full"
-        iconStyle="w-5 h-5"
+        className="m-4 h-12 p-2 w-full bg-white text text-black"
+        selectedTextStyle={styles.selectedTextStyle}
+        placeholderStyle={styles.placeholderStyle}
+        imageStyle={styles.imageStyle}
+        inputSearchStyle={styles.inputSearchStyle}
+        iconStyle={styles.iconStyle}
         maxHeight={200}
         value={selectedValue}
         data={data}
@@ -75,5 +76,35 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  dropdown: {
+    margin: 16,
+    height: 50,
+    borderBottomColor: 'gray',
+    borderBottomWidth: 0.5,
+  },
+  imageStyle: {
+    width: 24,
+    height: 24,
+  },
+  placeholderStyle: {
+    fontSize: 16,
+    color:'#000',
+  },
+  selectedTextStyle: {
+    fontSize: 16,
+    marginLeft: 8,
+    color:'#000',
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+  inputSearchStyle: {
+    height: 40,
+    fontSize: 16,
+  },
+});
 
 export default GenericDropdown;

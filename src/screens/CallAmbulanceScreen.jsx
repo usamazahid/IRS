@@ -43,12 +43,12 @@ const CallAmbulanceScreen = () => {
             onItemSelect={handleItemSelect} // Pass the callback function
           />
           {selectedItem && (
-            <View className="mt-4 items-center w-full">
+            <View className="mt-4 items-center w-ful">
               {selectedItem.image && (
                 <Image source={{ uri: selectedItem.image.uri }} className="w-16 h-16 rounded-full" />
               )}
-              <Text className="text-xl font-bold mt-2">{selectedItem.label}</Text>
-              <Text className="text-base mt-1">{selectedItem.description}</Text>
+              <Text className="text-xl font-bold mt-2 text-black">{selectedItem.label}</Text>
+              <Text className="text-base mt-1 text-black text-center">{selectedItem.description}</Text>
               <Text className="text-base text-blue-600 mt-1">{selectedItem.phone}</Text>
               <CustomButton title="CALL AMBULANCE" onPress={handleCall} />
             </View>

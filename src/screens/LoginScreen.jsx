@@ -43,9 +43,9 @@ const LoginScreen = () => {
 
         <CustomButton onPress={handleLogin} title='LOG IN'/>
 
-        <Text onPress={() => NavigationService.navigate('Signup')} >
+        <Text className='text-black text-center text-xl' onPress={() => NavigationService.navigate('Signup')} >
           DO NOT HAVE AN ACCOUNT ? 
-          <Text className='font-bold cursor-'> REGISTER HERE</Text></Text>
+          <Text className='font-bold'> REGISTER HERE</Text></Text>
       </ScrollView>
 
 

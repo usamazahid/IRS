@@ -37,8 +37,8 @@ const ProfileScreen = () => {
         
             <View className="mt-4 items-center w-full">
              
-              <Text><Text className="font-bold ">Mobile Number: </Text> 03162084839</Text>
-              <Text><Text className="font-bold ">Email Address: </Text> ABC@GMAIL.COM</Text>
+              <Text><Text className="font-bold text-black ">Mobile Number: </Text ><Text className=" text-black "> 03162084839</Text></Text>
+              <Text><Text className="font-bold text-black">Email Address: </Text> <Text className=" text-black ">ABC@GMAIL.COM</Text></Text>
               <CustomButton title="UPDATE"/>
               <Text className=" text-blue-600 mt-10 text-center">Verify Yourself within 30 days of Registration.</Text>
               <CustomButton title="verify" variant='outlined' />
