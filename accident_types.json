@@ -1,0 +1,48 @@
+[
+    {
+      "value": "1",
+      "label": "Minor Collision",
+      "image": {
+        "uri": ""
+      },
+      "description": "A minor road accident with no serious injuries.",
+      "phone": ""
+    },
+    {
+      "value": "2",
+      "label": "Major Collision",
+      "image": {
+        "uri": ""
+      },
+      "description": "A major road accident involving serious damage or injuries.",
+      "phone": ""
+    },
+    {
+      "value": "3",
+      "label": "Vehicle Rollover",
+      "image": {
+        "uri": ""
+      },
+      "description": "An accident where a vehicle tips over onto its side or roof.",
+      "phone": ""
+    },
+    {
+      "value": "4",
+      "label": "Hit and Run",
+      "image": {
+        "uri": ""
+      },
+      "description": "An accident where the vehicle involved leaves the scene without stopping.",
+      "phone": ""
+    },
+    {
+      "value": "5",
+      "label": "Pedestrian Accident",
+      "image": {
+        "uri": ""
+      },
+      "description": "An accident involving a vehicle and a pedestrian.",
+      "phone": ""
+    }
+  ]
+  
