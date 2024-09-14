@@ -3,7 +3,7 @@
     "value": "1",
     "label": "Rescue 1122",
     "image": {
-      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/rescue_1122.jpg"
     },
     "description": "Emergency rescue service providing rapid response.",
     "phone": "+9201234567"
@@ -12,7 +12,7 @@
     "value": "2",
     "label": "Edhi Foundation",
     "image": {
-      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/edhi_ambulance.jpg"
     },
     "description": "A charitable organization offering emergency services.",
     "phone": "+9207654321"
