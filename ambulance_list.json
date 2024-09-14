@@ -1,3 +1,4 @@
+[  
   {
     "value": "1",
     "label": "Item 1",
@@ -12,3 +13,4 @@
       "uri": "https://example.com/image2.jpg"
     }
   }
+]
