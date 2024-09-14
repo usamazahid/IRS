@@ -3,35 +3,35 @@
     "value": "1",
     "label": "Rescue 1122",
     "image": {
-      "uri": "https://rescue1122.com.pk/assets/images/rescue1122.jpg"
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
     }
   },
   {
     "value": "2",
     "label": "Edhi Foundation",
     "image": {
-      "uri": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Edhi_Ambulance.jpg/1280px-Edhi_Ambulance.jpg"
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
     }
   },
   {
     "value": "3",
     "label": "Chhipa",
     "image": {
-      "uri": "https://www.chhipa.org/images/chhipa-ambulance.jpg"
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
     }
   },
   {
     "value": "4",
     "label": "Suhayl Ambulance Service",
     "image": {
-      "uri": "https://www.suhaylambulanceservice.com/images/ambulance.jpg"
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
     }
   },
   {
     "value": "5",
     "label": "Gulab Devi Hospital Ambulance",
     "image": {
-      "uri": "https://gulabdevihospital.com/images/ambulance.jpg"
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
     }
   }
 ]
