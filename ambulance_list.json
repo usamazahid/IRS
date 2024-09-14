@@ -3,35 +3,45 @@
     "value": "1",
     "label": "Rescue 1122",
     "image": {
-      "uri": "https://rescue1122.com.pk/assets/images/rescue1122.jpg"
-    }
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
+    },
+    "description": "Emergency rescue service providing rapid response.",
+    "phone": "+9201234567"
   },
   {
     "value": "2",
     "label": "Edhi Foundation",
     "image": {
-      "uri": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Edhi_Ambulance.jpg/1280px-Edhi_Ambulance.jpg"
-    }
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
+    },
+    "description": "A charitable organization offering emergency services.",
+    "phone": "+9207654321"
   },
   {
     "value": "3",
     "label": "Chhipa",
     "image": {
-      "uri": "https://www.chhipa.org/images/chhipa-ambulance.jpg"
-    }
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
+    },
+    "description": "Provides ambulance and emergency services.",
+    "phone": "+9201122334"
   },
   {
     "value": "4",
     "label": "Suhayl Ambulance Service",
     "image": {
-      "uri": "https://www.suhaylambulanceservice.com/images/ambulance.jpg"
-    }
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
+    },
+    "description": "Offers medical emergency and ambulance services.",
+    "phone": "+9205566778"
   },
   {
     "value": "5",
     "label": "Gulab Devi Hospital Ambulance",
     "image": {
-      "uri": "https://gulabdevihospital.com/images/ambulance.jpg"
-    }
+      "uri": "https://raw.githubusercontent.com/usamazahid/IRS/main/src/assets/img/ambulance_icon.jpg"
+    },
+    "description": "Hospital ambulance service providing critical care.",
+    "phone": "+9209988776"
   }
 ]
