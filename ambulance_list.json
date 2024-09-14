@@ -1,0 +1,17 @@
+[
+    {
+      "value": "1",
+      "label": "Country 1",
+      "image": {
+        "uri": "https://www.vigcenter.com/public/all/images/default-image.jpg"
+      }
+    },
+    {
+      "value": "2",
+      "label": "Country 2",
+      "image": {
+        "uri": "https://www.vigcenter.com/public/all/images/default-image.jpg"
+      }
+    }
+  ]
+  
