@@ -7,6 +7,7 @@ import GenericDropdown from './components/DropDownMenu';
 import CustomButton from './components/CustomButton';
 import { ScrollView } from 'react-native-gesture-handler';
 
+import TopBar from './components/TopBarComponent';
 const CallAmbulanceScreen = () => {
   const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/ambulance_list.json'; // Replace with your JSON URL
 
@@ -24,12 +25,14 @@ const CallAmbulanceScreen = () => {
 
   return (
     <View className="flex-1 bg-slate-200">
+      
       <SafeAreaView className="flex">
         <View className="flex-row justify-start">
           <TouchableOpacity className="p-2 ml-2" onPress={() => NavigationService.goBack()}>
             <ArrowLeftIcon size="20" color="black" />
           </TouchableOpacity>
         </View>
+        <TopBar/>
         <ScrollView className='px-8'>
           <Text className="flex text-center text-gray-800 text-2xl">
             SELECT SERVICE

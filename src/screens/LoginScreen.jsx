@@ -4,7 +4,7 @@ import { View, Text, Button, Image, StyleSheet, TouchableOpacity } from 'react-n
 import { useAuth } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
-import logo from '../assets/img/logo.png';
+import logo from '../assets/img/logo_new.png';
 import CustomButton from './components/CustomButton';
 import NavigationService, { navigationRef } from '../context/NavigationService';
 
@@ -17,14 +17,16 @@ const LoginScreen = () => {
   };
   return (
     <View className="flex-1 bg-[#F0F0F0]">
-      <SafeAreaView className="flex" >
+      <SafeAreaView className="flex bg-white" >
         <View className="flex-row justify-center">
           <Image source={logo} style={styles.logo}></Image>
         </View>
       </SafeAreaView>
-
+      <Text className="text-xl font-bold text-[#4A90E2] px-4 py-2 rounded-md text-center">
+    ACCIDENT REPORTING PORTAL
+  </Text>
       <ScrollView className="flex-1 bg-white px-8 pt-8 rounded-t-3xl space-y-10">
-
+      
         <Text className="flex text-center text-gray-800 text-2xl">
           LOGIN
         </Text>

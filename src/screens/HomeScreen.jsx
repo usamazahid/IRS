@@ -9,12 +9,14 @@ import TextBox from './components/TextBox';
 import NavigationService, { navigationRef } from '../context/NavigationService';
 import CustomButton from './components/CustomButton';
 
+import TopBar from './components/TopBarComponent';
 const HomeScreen = () => {
     const { login } = useAuth();
     const navigation = useNavigation();
     return (
 
         <View className="flex-1 bg-slate-200">
+            
             <SafeAreaView className="flex">
                 <View className="flex-row justify-start">
                     <TouchableOpacity className="p-2 ml-2"
@@ -23,6 +25,7 @@ const HomeScreen = () => {
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
+            <TopBar/>
             <ScrollView className='px-8 '>
                 <Text className="flex text-center text-gray-800 text-2xl">
                     DASHBOARD

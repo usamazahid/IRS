@@ -16,6 +16,8 @@ import GenericDropdown from './components/DropDownMenu';
 import { launchCamera } from 'react-native-image-picker';
 import { CameraIcon } from 'react-native-heroicons/outline';
 
+import TopBar from './components/TopBarComponent';
+
 const ReportAccident = () => {
   const { login } = useAuth();
   const navigation = useNavigation();
@@ -47,7 +49,7 @@ const ReportAccident = () => {
           },
           (error) => {
             setErrorMsg('Unable to get location');
-            console.log(error);
+            // console.log(error);
           },
           { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
         );
@@ -99,11 +101,16 @@ const openCamera = async () => {
 
     launchCamera(options, (response) => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
+        // console.log('User cancelled image picker');
       } else if (response.errorCode) {
-        console.log('ImagePicker Error: ', response.errorMessage);
+        // console.log('ImagePicker Error: ', response.errorMessage);
       } else if (response.assets && response.assets.length > 0) {
-        setImageUri(response.assets[0].uri);
+        const uri = response.assets[0].uri;
+        if (uri) {
+          setImageUri(uri);
+        } else {
+          Alert.alert('Error', 'Image URI is not available.');
+        }
       }
     });
   };
@@ -111,6 +118,7 @@ const openCamera = async () => {
   return (
 
     <View className="flex-1 bg-white">
+     
       <SafeAreaView className="flex">
         <View className="flex-row justify-start">
           <TouchableOpacity className="p-2 ml-2"
@@ -119,6 +127,7 @@ const openCamera = async () => {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+       <TopBar/>
       <ScrollView className='px-8 '>
         <Text className="flex text-center text-gray-800 text-2xl">
           REPORT ACCIDENT
@@ -141,7 +150,11 @@ const openCamera = async () => {
         )}
 
         <TextBox label='Nearest LandMark' />
-
+       
+          <Text className={`mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10`}>
+            {"Accident Type"}
+          </Text>
+        
         <GenericDropdown className='bg-slate-200'
             dataUrl={DATA_URL}
             valueField="value"
@@ -152,13 +165,17 @@ const openCamera = async () => {
 
         <TextBox label='Cause of Accident'/>
 
+        <TextBox label='Vechile Involved'/>
+        
+        <TextBox label='Victim'/>
+
         <TextBox label="Total Number of Affecties" keyboardType='number'/>
 
         <TextBox label="Age of Affecties" keyboardType='number'/>
 
         <TextBox label='Gender Of Affecties'/>
 
-        <TextBox label='Gender Of Affecties'/>
+       
 
         <TextBox label='Other Details'/>
 

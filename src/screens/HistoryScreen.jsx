@@ -6,6 +6,7 @@ import NavigationService from '../context/NavigationService';
 import GenericDropdown from './components/DropDownMenu';
 import CustomButton from './components/CustomButton';
 
+import TopBar from './components/TopBarComponent';
 const ProfileScreen = () => {
   const data = [
     { id: '1', name: 'Road Accident', location: 'Main Street, City A', status: 'Active' },
@@ -43,13 +44,14 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-200">
+      
       <View className="flex">
         <View className="flex-row justify-start p-2">
           <TouchableOpacity onPress={() => NavigationService.goBack()}>
             <ArrowLeftIcon size="20" color="black" />
           </TouchableOpacity>
         </View>
-        
+        <TopBar/>
         <Text className="text-center text-gray-800 text-2xl mb-4">
           HISTORY
         </Text>
