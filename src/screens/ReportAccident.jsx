@@ -191,7 +191,7 @@ const openCamera = async () => {
         IconComponent={CameraIcon}
         variant='outlined'
         /> 
-        <CustomButton onPress={() => NavigationService.navigate('Home')} title='SUBMIT' />
+        <CustomButton onPress={() => NavigationService.navigate('Confirmation')} title='SUBMIT' />
       </ScrollView>
     </View>
 

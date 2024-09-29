@@ -28,7 +28,7 @@ const CallAmbulanceScreen = () => {
       
       <SafeAreaView className="flex">
         <View className="flex-row justify-start">
-          <TouchableOpacity className="p-2 ml-2" onPress={() => NavigationService.goBack()}>
+          <TouchableOpacity className="p-2 ml-2" onPress={() => NavigationService.navigate('Home')}>
             <ArrowLeftIcon size="20" color="black" />
           </TouchableOpacity>
         </View>

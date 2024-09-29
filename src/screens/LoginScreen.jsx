@@ -1,5 +1,6 @@
 // src/screens/LoginScreen.tsx
 import React from 'react';
+import { useState } from 'react';
 import { View, Text, Button, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,14 +8,23 @@ import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import logo from '../assets/img/logo_new.png';
 import CustomButton from './components/CustomButton';
 import NavigationService, { navigationRef } from '../context/NavigationService';
-
-
+import { useDispatch,useSelector } from 'react-redux';
+import {loginAsync} from '../redux/slices/authSlice'
 const LoginScreen = () => {
-  const { login } = useAuth();
+  const [mobile, setMobile] = useState('');
+  const dispatch = useDispatch();
+  const  {   user,role, permissions } = useSelector((state) => state.auth);
+ 
   const handleLogin = () => {
-    login();
+    dispatch(loginAsync(mobile));
+    console.log('login handle')
     NavigationService.navigate('Home');
   };
+  // const { login } = useAuth();
+  // const handleLogin = () => {
+  //   login();
+  //   NavigationService.navigate('Home');
+  // };
   return (
     <View className="flex-1 bg-[#F0F0F0]">
       <SafeAreaView className="flex bg-white" >
@@ -31,14 +41,14 @@ const LoginScreen = () => {
           LOGIN
         </Text>
 
-        <View className="relative w-full max-w-sm">
+        <View className="relative w-full max-w-sm ">
 
           <Text className="absolute top-[-10px] left-3 bg-white text-sm font-semibold text-gray-400 z-10">
             MOBILE NUMBER
           </Text>
 
           <TextInput className="p-4  text-gray-700  border-gray-800 border rounded-2xl"
-            keyboardType='phone-pad'
+            keyboardType='phone-pad' value={mobile} onChangeText={setMobile}
           />
           <Text className="text-gray-400 left-5">e.g. 03001234567</Text>
         </View>
