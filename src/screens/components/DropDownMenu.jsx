@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, Text, ActivityIndicator, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { SelectCountry } from 'react-native-element-dropdown'; // Update to your dropdown component
+import { SafeAreaView, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { SelectCountry } from 'react-native-element-dropdown';
 
 const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placeholder, onItemSelect }) => {
   const [data, setData] = useState([]);
@@ -17,8 +17,8 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
         }
         const jsonData = await response.json();
         setData(jsonData);
-      } catch (error) {
-        setError(error.message);
+      } catch (err) {
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -27,14 +27,10 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
     fetchData();
   }, [dataUrl]);
 
-  useEffect(() => {
-    if (data.length > 0 && selectedValue) {
-      const selectedItem = data.find(d => d[valueField] === selectedValue);
-      if (selectedItem && onItemSelect) {
-        onItemSelect(selectedItem);
-      }
-    }
-  }, [selectedValue, data, onItemSelect]);
+  const handleSelect = (item) => {
+    setSelectedValue(item[valueField]);
+    onItemSelect && onItemSelect(item);
+  };
 
   if (loading) {
     return (
@@ -69,20 +65,32 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
         imageField={imageField}
         placeholder={placeholder}
         searchPlaceholder="Search..."
-        onChange={e => {
-          setSelectedValue(e[valueField]);
-        }}
+        onChange={handleSelect}
       />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
   dropdown: {
     margin: 16,
     height: 50,
+    width: '90%',
     borderBottomColor: 'gray',
     borderBottomWidth: 0.5,
+    backgroundColor: '#fff',
   },
   imageStyle: {
     width: 24,
@@ -90,12 +98,12 @@ const styles = StyleSheet.create({
   },
   placeholderStyle: {
     fontSize: 16,
-    color:'#000',
+    color: '#000',
   },
   selectedTextStyle: {
     fontSize: 16,
     marginLeft: 8,
-    color:'#000',
+    color: '#000',
   },
   iconStyle: {
     width: 20,

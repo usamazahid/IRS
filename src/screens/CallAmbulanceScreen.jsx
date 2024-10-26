@@ -6,11 +6,11 @@ import NavigationService from '../context/NavigationService';
 import GenericDropdown from './components/DropDownMenu';
 import CustomButton from './components/CustomButton';
 import { ScrollView } from 'react-native-gesture-handler';
-
+import {API_BASE_URL} from '@env';
 import TopBar from './components/TopBarComponent';
 const CallAmbulanceScreen = () => {
-  const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/ambulance_list.json'; // Replace with your JSON URL
-
+  // const AMBULANCE_LIST_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/ambulance_list.json'; // Replace with your JSON URL
+  const AMBULANCE_LIST_URL = `${API_BASE_URL}/irs/lov/ambulance_services`;
   const [selectedItem, setSelectedItem] = useState(null);
 
   const handleItemSelect = (item) => {
@@ -38,8 +38,8 @@ const CallAmbulanceScreen = () => {
             SELECT SERVICE
           </Text>
           <GenericDropdown
-            dataUrl={DATA_URL}
-            valueField="value"
+            dataUrl={AMBULANCE_LIST_URL}
+            valueField="id"
             labelField="label"
             imageField="image"
             placeholder="Select Service"

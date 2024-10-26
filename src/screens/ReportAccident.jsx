@@ -15,7 +15,7 @@ import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import GenericDropdown from './components/DropDownMenu';
 import { launchCamera } from 'react-native-image-picker';
 import { CameraIcon } from 'react-native-heroicons/outline';
-
+import {API_BASE_URL} from '@env';
 import TopBar from './components/TopBarComponent';
 
 const ReportAccident = () => {
@@ -24,7 +24,10 @@ const ReportAccident = () => {
   const [region, setRegion] = useState(null);
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/accident_types.json'; // Replace with your JSON URL
+  const ACCIDENT_TYPES_URL = `${API_BASE_URL}/irs/lov/accident_types`;
+  const PATIENT_VICTIM_URL = `${API_BASE_URL}/irs/lov/patient_victim`;
+  const VECHILE_INVOLVED_URL = `${API_BASE_URL}/irs/lov/vechile_involved`;
+  // const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/accident_types.json';
   const [imageUri, setImageUri] = useState(null);
   
   useEffect(() => {
@@ -152,22 +155,42 @@ const openCamera = async () => {
         <TextBox label='Nearest LandMark' />
        
           <Text className={`mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10`}>
-            {"Accident Type"}
+            {"ACCIDENT TYPE"}
           </Text>
         
         <GenericDropdown className='bg-slate-200'
-            dataUrl={DATA_URL}
-            valueField="value"
+            dataUrl={ACCIDENT_TYPES_URL}
+            valueField="id"
             labelField="label"
             imageField="image"
             placeholder="Select Accident Type" // Pass the callback function
           />
 
+           <Text className={`mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10`}>
+            {"VECHILE INVOLVED"}
+          </Text>
+        <GenericDropdown className='bg-slate-200'
+            dataUrl={VECHILE_INVOLVED_URL}
+            valueField="id"
+            labelField="label"
+            imageField="image"
+            placeholder="Select Vechile Involved" // Pass the callback function
+          />
+        <Text className={`mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10`}>
+            {"PATIENT VICTIM"}
+          </Text>
+        <GenericDropdown className='bg-slate-200'
+            dataUrl={PATIENT_VICTIM_URL}
+            valueField="id"
+            labelField="label"
+            imageField="image"
+            placeholder="Select Patient Victim" // Pass the callback function
+          />
+
+
         <TextBox label='Cause of Accident'/>
 
-        <TextBox label='Vechile Involved'/>
-        
-        <TextBox label='Victim'/>
+       
 
         <TextBox label="Total Number of Affecties" keyboardType='number'/>
 

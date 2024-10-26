@@ -1,12 +1,13 @@
 import axios from "axios";
+import {API_BASE_URL} from '@env';
 
-const apiURL = 'http://localhost:8002';
+const apiURL = API_BASE_URL;
 // const apiURL="https://raw.githubusercontent.com/farman20ali/dataaccess_irs/refs/heads/main/src/main/resources/samples/"
 
 export const fetchUserByMobile = async (mobile: string) => {
   try {
     console.log('Fetching user by mobile number...');
-    const path=`${apiURL}/irs/user`
+    const path=`${apiURL}/irs/user`;
     //  const path=`${apiURL}/users.json`
     const response = await axios.post(path, {
       fileName: 'mobile',
@@ -117,4 +118,15 @@ export const fetchRolesPermissions = async (userId: number) => {
     console.error('Config:', error.config);
     throw error;
   }
+};
+
+
+export const createUser = async ({name, mobileNumber, email, password}:any) => {
+  const response = await axios.post(`${API_BASE_URL}/irs/createUser`, {
+    mobileNumber: mobileNumber,
+    username: name,
+    email,
+    password: password, // Hashing password ideally done on backend
+  });
+  return response.data;
 };
