@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-// Import the icon library (e.g., Heroicons)
-import { CameraIcon } from 'react-native-heroicons/outline'; // Example icon
+// Import the icon library (e.g., Heroicons) 
 
 interface CustomButtonProps {
   title: string;

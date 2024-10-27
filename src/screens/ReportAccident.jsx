@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView, TextInput } from 'react-native-gesture-handler';
-import { ArrowLeftIcon } from 'react-native-heroicons/solid'
+import { ScrollView } from 'react-native-gesture-handler';
+import { ArrowLeftIcon } from 'react-native-heroicons/solid';
 import { useNavigation } from '@react-navigation/native';
 import TextBox from './components/TextBox';
-import NavigationService, { navigationRef } from '../context/NavigationService';
+import NavigationService from '../context/NavigationService';
 import CustomButton from './components/CustomButton';
-import { StyleSheet, Alert, Platform, PermissionsAndroid, Image } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
-import Geolocation from '@react-native-community/geolocation';
-import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import { StyleSheet, Alert } from 'react-native';
 import GenericDropdown from './components/DropDownMenu';
-import { launchCamera } from 'react-native-image-picker';
-import { CameraIcon } from 'react-native-heroicons/outline';
+import AudioRecorder from './components/AudioRecorder';
+import AudioPlayer from './components/AudioPlayer';
 import {API_BASE_URL} from '@env';
 import TopBar from './components/TopBarComponent';
+import MapComponent from './components/MapComponent';
+import CameraComponent from './components/CameraComponent';
+import { readAudioFileAsBase64 } from '../utils/AudioUtils';
+import { uploadAudioToBackend } from '../services/audioService';
+
 
 const ReportAccident = () => {
   const { login } = useAuth();
@@ -29,99 +31,31 @@ const ReportAccident = () => {
   const VECHILE_INVOLVED_URL = `${API_BASE_URL}/irs/lov/vechile_involved`;
   // const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/accident_types.json';
   const [imageUri, setImageUri] = useState(null);
-  
-  useEffect(() => {
-    const getLocation = async () => {
-      const permission = Platform.select({
-        ios: PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
-        android: PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
-      });
 
-      const result = await request(permission);
-      if (result === RESULTS.GRANTED) {
-        Geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setLocation({
-              latitude,
-              longitude,
-              latitudeDelta: 24.930107447355187,
-              longitudeDelta: 67.11535853040111,
 
-            });
-          },
-          (error) => {
-            setErrorMsg('Unable to get location');
-            // console.log(error);
-          },
-          { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
-        );
-      } else {
-        Alert.alert('Permission denied', 'You need to grant location permissions to use this feature.');
-        setErrorMsg('Permission to access location was denied');
-      }
-    };
+  const [audioPath, setAudioPath] = useState(null);
 
-    getLocation();
-  }, []);
-
-  const requestCameraPermission = async () => {
-    try {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          {
-            title: 'Camera Permission',
-            message: 'This app needs access to your camera to take photos.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } else {
-        // No permission needed for iOS
-        return true;
-      }
-    } catch (err) {
-      console.warn(err);
-      return false;
-    }
+  const handleRecordingComplete = (path) => {
+    setAudioPath(path);
   };
 
-const openCamera = async () => {
-    // Check for camera permission
-    const hasPermission = await requestCameraPermission();
-    if (!hasPermission) {
-      Alert.alert('Camera Permission Denied', 'Cannot access the camera without permission.');
+   // Function to convert audio file to base64 or binary and send to backend
+  const submitAudioToBackend = async () => {
+    if (!audioPath) {
+      Alert.alert('Error', 'No audio file recorded.');
       return;
     }
 
-    const options = {
-      mediaType: 'photo',
-      saveToPhotos: true,
-    };
-
-    launchCamera(options, (response) => {
-      if (response.didCancel) {
-        // console.log('User cancelled image picker');
-      } else if (response.errorCode) {
-        // console.log('ImagePicker Error: ', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        const uri = response.assets[0].uri;
-        if (uri) {
-          setImageUri(uri);
-        } else {
-          Alert.alert('Error', 'Image URI is not available.');
-        }
-      }
-    });
+    const audioData = await readAudioFileAsBase64(audioPath);
+    if (audioData) {
+      await uploadAudioToBackend(audioData, 'recording.mp3');
+    }
   };
 
   return (
 
     <View className="flex-1 bg-white">
-     
+
       <SafeAreaView className="flex">
         <View className="flex-row justify-start">
           <TouchableOpacity className="p-2 ml-2"
@@ -131,34 +65,21 @@ const openCamera = async () => {
         </View>
       </SafeAreaView>
        <TopBar/>
-      <ScrollView className='px-8 '>
+      <ScrollView className="px-8 ">
         <Text className="flex text-center text-gray-800 text-2xl">
           REPORT ACCIDENT
         </Text>
 
-        {location ? (
-          <View className='h-24'>
-            <MapView
-              style={styles.map}
-              initialRegion={location}
-              showsUserLocation
-            >
-              <Marker coordinate={location} />
-            </MapView>
-          </View>
-        ) : (
-          <View style={styles.container}>
-            {errorMsg && <Text>{errorMsg}</Text>}
-          </View>
-        )}
+          <MapComponent location={location} setLocation={setLocation} style={styles.map} />
 
-        <TextBox label='Nearest LandMark' />
-       
-          <Text className={`mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10`}>
-            {"ACCIDENT TYPE"}
+
+        <TextBox label="Nearest LandMark" />
+
+          <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
+            {'ACCIDENT TYPE'}
           </Text>
-        
-        <GenericDropdown className='bg-slate-200'
+
+        <GenericDropdown className="bg-slate-200"
             dataUrl={ACCIDENT_TYPES_URL}
             valueField="id"
             labelField="label"
@@ -166,20 +87,20 @@ const openCamera = async () => {
             placeholder="Select Accident Type" // Pass the callback function
           />
 
-           <Text className={`mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10`}>
-            {"VECHILE INVOLVED"}
+           <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
+            {'VECHILE INVOLVED'}
           </Text>
-        <GenericDropdown className='bg-slate-200'
+        <GenericDropdown className="bg-slate-200"
             dataUrl={VECHILE_INVOLVED_URL}
             valueField="id"
             labelField="label"
             imageField="image"
             placeholder="Select Vechile Involved" // Pass the callback function
           />
-        <Text className={`mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10`}>
-            {"PATIENT VICTIM"}
+        <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
+            {'PATIENT VICTIM'}
           </Text>
-        <GenericDropdown className='bg-slate-200'
+        <GenericDropdown className="bg-slate-200"
             dataUrl={PATIENT_VICTIM_URL}
             valueField="id"
             labelField="label"
@@ -188,33 +109,31 @@ const openCamera = async () => {
           />
 
 
-        <TextBox label='Cause of Accident'/>
+        <TextBox label="Cause of Accident"/>
 
-       
 
-        <TextBox label="Total Number of Affecties" keyboardType='number'/>
 
-        <TextBox label="Age of Affecties" keyboardType='number'/>
+        <TextBox label="Total Number of Affecties" keyboardType="number"/>
 
-        <TextBox label='Gender Of Affecties'/>
+        <TextBox label="Age of Affecties" keyboardType="number"/>
 
-       
+        <TextBox label="Gender Of Affecties"/>
 
-        <TextBox label='Other Details'/>
 
-        {imageUri && (
-        <Image
-          source={{ uri: imageUri }}
-          style={styles.image}
-        />
-      )}
-        <CustomButton
-         onPress={openCamera} 
-        title='Take Photo' 
-        IconComponent={CameraIcon}
-        variant='outlined'
-        /> 
-        <CustomButton onPress={() => NavigationService.navigate('Confirmation')} title='SUBMIT' />
+
+        <TextBox label="Other Details"/>
+
+
+      <CameraComponent onCapture={(uri) => setImageUri(uri)} editable={true}  /> 
+      {/* <CameraComponent initialUri={savedUri} editable={false} /> */}
+
+        {/* Recorder with a 1-minute time limit */}
+      <AudioRecorder expiryTime={60000} onRecordingComplete={handleRecordingComplete} />
+
+      {/* Show the player if there is recorded audio */}
+      {audioPath && <AudioPlayer audioPath={audioPath} />}
+
+        <CustomButton onPress={() => NavigationService.navigate('Confirmation')} title="SUBMIT" />
       </ScrollView>
     </View>
 
@@ -225,9 +144,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  map: {
-    height: 100
-  },
+  map: { height: 150, marginVertical: 20 },
   image: {
     width: 200,
     height: 200,

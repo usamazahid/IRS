@@ -77,3 +77,32 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+
+# Creating the release
+cd android/app
+
+--> run : 
+      keytool -genkey -v -keystore android.keystore -alias androidkey -keyalg RSA -keysize 2048 -validity 10000
+
+--> password will be asked and other information : android
+--> name of keystore file (my-release-key.keystore): android.keystore
+--> file alias (my-release-key): androidkey
+
+edit android/app/build.gradle
+--> changing password you inserted, and use alias as my-key-alias in place of androiddebugkey
+   signingConfigs {
+        debug {
+            storeFile file('android.keystore')
+            storePassword 'android'
+            keyAlias 'androidkey'
+            keyPassword 'android'
+        }
+    }
+
+cd android
+./gradlew assembleRelease
+
+location of apk:
+file: android/app/build/outputs/apk/release/app-release.apk
+path: android\app\build\outputs\apk\release
