@@ -66,6 +66,26 @@ export const loginAsync = createAsyncThunk(
   },
 );
 
+export const reportAccident = createAsyncThunk(
+  'auth/reportAccident',
+  async (mobile: string, {rejectWithValue}) => {
+    try {
+      const userResponse = await fetchUserByMobile(mobile);
+      const rolesPermissionsResponse = await fetchRolesPermissions(
+        userResponse.id,
+      );
+      return {
+        user: userResponse,
+        role: rolesPermissionsResponse.role,
+        permissions: rolesPermissionsResponse.permissions,
+      };
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      return rejectWithValue('Failed to login');
+    }
+  },
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,

@@ -10,7 +10,7 @@ import {API_BASE_URL} from '@env';
 import TopBar from './components/TopBarComponent';
 const CallAmbulanceScreen = () => {
   // const AMBULANCE_LIST_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/ambulance_list.json'; // Replace with your JSON URL
-  const AMBULANCE_LIST_URL = `${API_BASE_URL}/irs/lov/ambulance_services`;
+  const AMBULANCE_LIST_URL = `${API_BASE_URL}/irs/getOrganizations`;
   const [selectedItem, setSelectedItem] = useState(null);
 
   const handleItemSelect = (item) => {

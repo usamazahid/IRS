@@ -26,9 +26,9 @@ const ReportAccident = () => {
   const [region, setRegion] = useState(null);
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const ACCIDENT_TYPES_URL = `${API_BASE_URL}/irs/lov/accident_types`;
-  const PATIENT_VICTIM_URL = `${API_BASE_URL}/irs/lov/patient_victim`;
-  const VECHILE_INVOLVED_URL = `${API_BASE_URL}/irs/lov/vechile_involved`;
+  const ACCIDENT_TYPES_URL = `${API_BASE_URL}/irs/getAccidentTypes`;
+  const PATIENT_VICTIM_URL = `${API_BASE_URL}/irs/getPatientVictim`;
+  const VECHILE_INVOLVED_URL = `${API_BASE_URL}/irs/getVehicleInvolved`;
   // const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/accident_types.json';
   const [imageUri, setImageUri] = useState(null);
 
@@ -67,7 +67,7 @@ const ReportAccident = () => {
        <TopBar/>
       <ScrollView className="px-8 ">
         <Text className="flex text-center text-gray-800 text-2xl">
-          REPORT ACCIDENT
+          REPORT ACCIDENT 
         </Text>
 
           <MapComponent location={location} setLocation={setLocation} style={styles.map} />

@@ -12,11 +12,20 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
     const fetchData = async () => {
       try {
         const response = await fetch(dataUrl);
+
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
+
         const jsonData = await response.json();
-        setData(jsonData);
+
+        const processedData = jsonData.map((item) => ({
+          ...item,
+          image_uri: item.image_uri || 'https://via.placeholder.com/150', // Add fallback image
+        }));
+
+        console.log('Processed Data:', JSON.stringify(processedData, null, 2));
+        setData(processedData);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -34,7 +43,7 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 justify-center items-center">
+      <SafeAreaView style={styles.center}>
         <ActivityIndicator size="large" color="#0000ff" />
       </SafeAreaView>
     );
@@ -42,16 +51,16 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
 
   if (error) {
     return (
-      <SafeAreaView className="flex-1 justify-center items-center">
-        <Text>Error: {error}</Text>
+      <SafeAreaView style={styles.center}>
+        <Text style={{ color: 'red' }}>Error: {error}</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 justify-center items-center pt-4 mb-4">
+    <SafeAreaView style={styles.dropdownContainer}>
       <SelectCountry
-        className="m-4 h-12 p-2 w-full bg-white text text-black"
+        style={styles.dropdown}
         selectedTextStyle={styles.selectedTextStyle}
         placeholderStyle={styles.placeholderStyle}
         imageStyle={styles.imageStyle}
@@ -62,7 +71,7 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
         data={data}
         valueField={valueField}
         labelField={labelField}
-        imageField={imageField}
+        imageField="image"
         placeholder={placeholder}
         searchPlaceholder="Search..."
         onChange={handleSelect}

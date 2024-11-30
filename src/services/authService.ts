@@ -4,14 +4,14 @@ import {API_BASE_URL} from '@env';
 const apiURL = API_BASE_URL;
 // const apiURL="https://raw.githubusercontent.com/farman20ali/dataaccess_irs/refs/heads/main/src/main/resources/samples/"
 
-export const fetchUserByMobile = async (mobile: string) => {
+export const fetchUserByMobile = async (userId: string) => {
   try {
+    console.log("Current API URL:", API_BASE_URL);
     console.log('Fetching user by mobile number...');
-    const path=`${apiURL}/irs/user`;
+    const path=`${apiURL}/irs/getUserData`;
     //  const path=`${apiURL}/users.json`
     const response = await axios.post(path, {
-      fileName: 'mobile',
-      params:  mobile,  // Ensure this key matches your backend requirements
+      userId:  userId  // Ensure this key matches your backend requirements
     }, {
       headers: {
         'Accept': 'application/json',
@@ -24,11 +24,13 @@ export const fetchUserByMobile = async (mobile: string) => {
     // const data = await response.data;
     const obj = await response.data;
 
+    console.log("obj.data ",obj)
+
     // Check if data is valid
     // if (!data || data.length === 0) {
     //   throw new Error('Invalid Login Credentials');
     // }
-    if (!obj || !obj.data || obj.data.length === 0) {
+    if (!obj || obj.length === 0) {
       throw new Error('Invalid Login Credentials');
     }
     
@@ -41,8 +43,7 @@ export const fetchUserByMobile = async (mobile: string) => {
     // const userData = filteredUser.data.find((item:any) => item.mobile_number === mobile);
  
     // return userData; 
-    console.log("obj.data ",obj.data)
-    return obj.data[0];
+    return obj;
   } catch (error: any) {
     if (error.response) {
       console.error('Response Error:', error.response.data);
@@ -60,11 +61,10 @@ export const fetchUserByMobile = async (mobile: string) => {
 export const fetchRolesPermissions = async (userId: number) => {
   try {
     console.log('Fetching roles and permissions for user...');
- const path=`${apiURL}/irs/user`
+ const path=`${apiURL}/irs/getUserRoles`
     //  const path=`${apiURL}/user_permissions.json`
     const response = await axios.post(path, {
-      fileName: 'roles',
-      params:   `${userId},${userId}`   // Pass userId properly formatted as per backend needs
+      userId:   userId   // Pass userId properly formatted as per backend needs
     }, {
       headers: {
         'Accept': 'application/json',
@@ -73,14 +73,15 @@ export const fetchRolesPermissions = async (userId: number) => {
     });
     // const response = await axios.get(path)
     // const data =await response.data;
+
     const obj =await response.data;
 
-   
+   console.log("obj.data ",obj)
     // Check if data is valid
     // if (!data || data.length === 0) {
     //   throw new Error('No roles or permissions found');
     // }
-    if (!obj || !obj.data || obj.data.length === 0) {
+    if (!obj ||  obj.length === 0) {
       throw new Error('No roles or permissions found');
     }
     // Filter roles and permissions by userId
@@ -92,7 +93,7 @@ export const fetchRolesPermissions = async (userId: number) => {
 
     // Extract the first valid role
     // const firstRole = userPermissions.data.find((item: any) => item.role_name !== null);
-    const firstRole = obj.data.find((item: any) => item.role_name !== null);
+    const firstRole = obj.find((item: any) => item.role_name !== null);
 
     if (!firstRole) {
       throw new Error('No valid role found');
@@ -100,7 +101,7 @@ export const fetchRolesPermissions = async (userId: number) => {
     const role_permission={
       role: firstRole.role_name || null,  // Assuming a single role like "admin"
       // permissions: userPermissions.data.map((item: any) => item.permission_name)  // Return all permissions
-      permissions: obj.data.map((item: any) => item.permission_name) 
+      permissions: obj.map((item: any) => item.permission_name) 
     }
     console.log(role_permission)
     return role_permission;
