@@ -106,3 +106,7 @@ cd android
 location of apk:
 file: android/app/build/outputs/apk/release/app-release.apk
 path: android\app\build\outputs\apk\release
+
+
+//port binding with backened
+adb -s emulator-5554 forward tcp:8080 tcp:8080
