@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity,useEffect } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-gesture-handler';
 import { ArrowLeftIcon } from 'react-native-heroicons/solid';
@@ -14,7 +14,7 @@ import { useSnackBar } from '../context/SnackBarContext';
 const SignUpScreen = () => {
     const { showSnackBar } = useSnackBar();
     const dispatch = useDispatch();
-    const { error, loading } = useSelector(state => state.auth);
+    const {  loading,isAuthenticated } = useSelector(state => state.auth);
     const [form, setForm] = useState({
         name: '',
         mobileNumber: '',
@@ -27,7 +27,7 @@ const SignUpScreen = () => {
     const handleSignUp = () => {
         // Validate required fields
         if (!form.name.trim() || !form.mobileNumber.trim() || !form.password.trim()) {
-            showSnackBar('Name, mobile number, and password are required');
+            showSnackBar('Name, mobile number, and password are required','info');
             return;
         }
 
@@ -35,13 +35,20 @@ const SignUpScreen = () => {
         dispatch(signupAsync(form))
             .unwrap()
             .then(() => {
-                showSnackBar('Success', 'Account created successfully');
+                showSnackBar('Account created successfully');
                 NavigationService.goBack(); // Navigate back on success
             })
             .catch((err) => {
-                showSnackBar('Error', err || 'Failed to create account');
+                showSnackBar( err || 'Failed to create account','error');
             });
     };
+
+useEffect(() => {
+    // Redirect to Home if already logged in
+    if (isAuthenticated) {
+      NavigationService.navigate('Home');
+    }
+  }, [isAuthenticated]);
 
     return (
         <View className="flex-1 bg-white">
@@ -60,7 +67,6 @@ const SignUpScreen = () => {
                 <TextBox label="EMAIL (OPTIONAL)" keyboardType='email-address' value={form.email} onChangeText={(value) => handleChange('email', value)} />
                 <TextBox label='PASSWORD' isPassword value={form.password} onChangeText={(value) => handleChange('password', value)} />
                 <CustomButton onPress={handleSignUp} title='SIGN UP' loading={loading} />
-                {error && <Text className="text-red-500 text-center">{error}</Text>}
             </ScrollView>
         </View>
     );

@@ -44,16 +44,24 @@ export const signupAsync = createAsyncThunk(
     }
   },
 );
-
 // Async thunk for logging in
 export const loginAsync = createAsyncThunk(
   'auth/loginAsync',
   async (mobile: string, {rejectWithValue}) => {
+     if (!mobile || mobile.trim() === '') {
+       return rejectWithValue('Mobile number is required'); // Reject with specific error if no mobile number
+     }
     try {
       const userResponse = await fetchUserByMobile(mobile);
-      const rolesPermissionsResponse = await fetchRolesPermissions(
-        userResponse.id,
-      );
+      
+      // Check if userResponse.id exists
+      if (!userResponse.id) {
+        return rejectWithValue('Invalid input: User not found'); // Return an error message for invalid input
+      }
+         const rolesPermissionsResponse = await fetchRolesPermissions(
+           userResponse.id,
+         );
+
       return {
         user: userResponse,
         role: rolesPermissionsResponse.role,
@@ -96,6 +104,9 @@ const authSlice = createSlice({
       state.role = null;
       state.permissions = [];
     },
+    resetError(state) {
+      state.error = null; // Reset the error state
+    },
   },
   extraReducers: builder => {
     builder
@@ -114,6 +125,7 @@ const authSlice = createSlice({
       .addCase(signupAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.isAuthenticated = false;
       })
       .addCase(loginAsync.pending, state => {
         state.loading = true;
@@ -135,5 +147,5 @@ const authSlice = createSlice({
   },
 });
 
-export const {logout} = authSlice.actions;
+export const {logout, resetError} = authSlice.actions;
 export default authSlice.reducer;

@@ -12,24 +12,32 @@ import CustomButton from './components/CustomButton';
 import { useDispatch, useSelector } from 'react-redux';
 import TopBar from './components/TopBarComponent';
 import { hasRequiredPermissions } from '../utils/permissionUtils'; 
-
+import { logout } from '../redux/slices/authSlice'; // Adjust the path to where your authSlice is located
 import {useSnackBar} from '../context/SnackBarContext'
 const HomeScreen = () => {
     const { showSnackBar } = useSnackBar();
+    const dispatch = useDispatch();
     const { user, role, permissions } = useSelector((state) => state.auth);
     const navigation = useNavigation();
+    const handleLogout = () => {
+        dispatch(logout()); 
+        showSnackBar('Successful Logout');
+        NavigationService.navigate('Login');
+      };
+
+      
     return (
 
         <View className="flex-1 bg-slate-200">
 
-            <SafeAreaView className="flex">
+            {/* <SafeAreaView className="flex">
                 <View className="flex-row justify-start">
                     <TouchableOpacity className="p-2 ml-2"
                         onPress={() => NavigationService.goBack()}>
                         <ArrowLeftIcon size="20" color="black" />
                     </TouchableOpacity>
                 </View>
-            </SafeAreaView>
+            </SafeAreaView> */}
             <TopBar />
             <ScrollView className='px-8 '>
                 <Text className="flex text-center text-gray-800 text-2xl">
@@ -115,6 +123,11 @@ const HomeScreen = () => {
                         title='PROFILE'
                         variant='outlined' />)
                 }
+
+                    <CustomButton
+                        onPress={handleLogout}
+                        title='LOGOUT'
+                        variant='outlined' />
             </ScrollView>
         </View>
 
