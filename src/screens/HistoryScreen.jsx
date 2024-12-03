@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeftIcon } from 'react-native-heroicons/solid';
@@ -6,8 +6,12 @@ import NavigationService from '../context/NavigationService';
 import GenericDropdown from './components/DropDownMenu';
 import CustomButton from './components/CustomButton';
 
+import {  useSelector } from 'react-redux';
+import { getReportData } from '../services/accidentService';
 import TopBar from './components/TopBarComponent';
-const ProfileScreen = () => {
+const HistoryScreen = () => {
+
+  const { user, role, permissions } = useSelector((state) => state.auth);
   const data = [
     { id: '1', name: 'Road Accident', location: 'Main Street, City A', status: 'Active' },
     { id: '2', name: 'Fire Incident', location: 'Warehouse District, City B', status: 'Resolved' },
@@ -21,12 +25,33 @@ const ProfileScreen = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState(data);
+  const [reportData, setReportData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch report data
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        const data = await getReportData(user.id);
+        setReportData(data);
+        setFilteredData(data); // Only showing one report, so we put it in an array
+      } catch (err) {
+        setError('Failed to fetch report data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReport();
+  }, [user.id]);
+
 
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (query) {
       const filtered = data.filter((item) =>
-        item.name && typeof item.name === 'string' && item.name.toLowerCase().includes(query.toLowerCase())
+        item.accidentTypeLabel && typeof item.accidentTypeLabel === 'string' && item.accidentTypeLabel.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredData(filtered);
     } else {
@@ -36,9 +61,9 @@ const ProfileScreen = () => {
 
   const renderPanel = ({ item }) => (
     <TouchableOpacity className="bg-gray-100 p-4 rounded-lg mb-2">
-      <Text className="text-lg font-semibold text-black">{item.name}</Text>
+      <Text className="text-lg font-semibold text-black">{item.accidentTypeLabel}</Text>
       <Text className="text-sm text-gray-600">{item.location}</Text>
-      <Text className="text-sm mt-1">Status: <Text className="font-medium">{item.status}</Text></Text>
+      <Text className="text-sm mt-1 text-black">Status: <Text className="font-medium">{item.status}</Text></Text>
     </TouchableOpacity>
   );
 
@@ -76,4 +101,4 @@ const ProfileScreen = () => {
   );
 };
 
-export default ProfileScreen;
+export default HistoryScreen;

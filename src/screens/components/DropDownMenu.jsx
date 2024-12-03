@@ -36,7 +36,7 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
     fetchData();
   }, [dataUrl]);
 
-  const handleSelect = (item) => {
+  const handleSelect = (item) => { 
     setSelectedValue(item[valueField]);
     onItemSelect && onItemSelect(item);
   };
