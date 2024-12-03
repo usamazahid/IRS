@@ -9,7 +9,7 @@ import TextBox from './components/TextBox';
 import NavigationService from '../context/NavigationService';
 import CustomButton from './components/CustomButton';
 import { StyleSheet, Alert } from 'react-native';
-import GenericDropdown from './components/DropDownMenu';
+import SimpleDropDownMenu from './components/SimpleDropDownMenu';
 import AudioRecorder from './components/AudioRecorder';
 import AudioPlayer from './components/AudioPlayer';
 import {API_BASE_URL} from '@env';
@@ -48,7 +48,14 @@ const ReportAccident = () => {
     nearestLandMark:''
   });
 
+  const genderData = [
+    {id:1,  label: 'Male', value: 'male' },
+    {id:2,  label: 'Female', value: 'female' },
+    {id:3,  label: 'Other', value: 'other' }
+  ];
+
   const inputHandling = (fieldName, data) => {
+    console.log(data);
     setFormData((prev) => ({
       ...prev,
       [fieldName]: data,
@@ -88,10 +95,10 @@ const ReportAccident = () => {
       // });
       console.log('reportPayload : ',reportPayload);
       const response = await submitAccidentReport(reportPayload);
-      if(response.data.id){
+      if(response.id){
         NavigationService.navigate('Confirmation');
       }else{
-       Alert.alert('Error', `Error ${response.data.error}`);
+       Alert.alert('Error', `Error ${response.error}`);
       }
       
     } catch (error) {
@@ -132,37 +139,49 @@ const ReportAccident = () => {
             {'ACCIDENT TYPE'}
           </Text>
 
-        <GenericDropdown className="bg-slate-200"
+        <SimpleDropDownMenu className="bg-slate-200"
             dataUrl={ACCIDENT_TYPES_URL}
             valueField="id"
             labelField="label"
             imageField="image"
             placeholder="Select Accident Type" // Pass the callback function
-            onChange={(value) => inputHandling('accidentTypeId', value)}
+            onItemSelect={(value) => inputHandling('accidentTypeId', value.id)}
           />
 
            <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
             {'VECHILE INVOLVED'}
           </Text>
-        <GenericDropdown className="bg-slate-200"
+        <SimpleDropDownMenu className="bg-slate-200"
             dataUrl={VECHILE_INVOLVED_URL}
             valueField="id"
             labelField="label"
             imageField="image"
             placeholder="Select Vechile Involved" // Pass the callback function
-            onChange={(value) => inputHandling('vehicleInvolvedId', value)}
+            onItemSelect={(value) => inputHandling('vehicleInvolvedId', value.id)}
           />
         <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
             {'PATIENT VICTIM'}
         </Text>
-        <GenericDropdown className="bg-slate-200"
+        <SimpleDropDownMenu className="bg-slate-200"
             dataUrl={PATIENT_VICTIM_URL}
             valueField="id"
             labelField="label"
             imageField="image"
             placeholder="Select Patient Victim" // Pass the callback function
-            onChange={(value) => inputHandling('patientVictimId', value)}
+            onItemSelect={(value) => {
+              console.log(value);
+              inputHandling('patientVictimId', value.id)}}
           />
+        <SimpleDropDownMenu className="bg-slate-200"
+          // dataUrl={PATIENT_VICTIM_URL}
+          data={genderData}
+          valueField="id"
+          labelField="label"
+          placeholder="Select Gender" // Pass the callback function
+          onItemSelect={(value) => {
+            console.log(value);
+            inputHandling('gender', value.value)}}
+        />
         <TextBox
           label="Cause of Accident"
           onChangeText={(text) => inputHandling('cause', text)}
@@ -177,10 +196,10 @@ const ReportAccident = () => {
           keyboardType="number"
           onChangeText={(text) => inputHandling('age', text)}
         />
-        <TextBox
+        {/* <TextBox
           label="Gender of Affected"
           onChangeText={(text) => inputHandling('gender', text)}
-        />
+        /> */}
 
         <TextBox label="Other Details"
         onChangeText={(text) => inputHandling('description', text)}
