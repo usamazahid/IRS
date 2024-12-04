@@ -15,46 +15,44 @@ interface MapComponentProps {
 const MapComponent: React.FC<MapComponentProps> = ({ location, setLocation, editable = true, style }) => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-      useEffect(() => {
-        const getLocation = async () => {
-          const permission = Platform.select({
-            ios: PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
-            android: PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
-          });
-
-          if (permission) { // Check if permission is defined
-            const result = await request(permission);
-            if (result === RESULTS.GRANTED) {
-              Geolocation.getCurrentPosition(
-                (position) => {
-                  const { latitude, longitude } = position.coords;
-                  setLocation({
-                    latitude,
-                    longitude,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
-                  });
-                },
-                (error) => {
-                  setErrorMsg('Unable to get location: ' + error.message);
-                },
-                { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
-              );
-            } else {
-              Alert.alert('Permission denied', 'You need to grant location permissions to use this feature.');
-              setErrorMsg('Permission to access location was denied');
-            }
-          } else {
-            setErrorMsg('Platform not supported');
-          }
-        };
-
-        if (editable) {
-          getLocation();
-        } else if (location) {
-          setLocation(location);
+  useEffect(() => {
+    const getLocation = async () => {
+      const permission = Platform.select({
+        ios: PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
+        android: PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
+      });
+  
+      if (permission) {
+        const result = await request(permission);
+        if (result === RESULTS.GRANTED) {
+          Geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords;
+              setLocation({
+                latitude,
+                longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              });
+            },
+            (error) => {
+              setErrorMsg('Unable to get location: ' + error.message);
+            },
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+          );
+        } else {
+          setErrorMsg('Permission to access location was denied');
         }
-      }, [editable, location, setLocation]);
+      } else {
+        setErrorMsg('Platform not supported');
+      }
+    };
+  
+    if (editable && !location) { // Only fetch location once if editable
+      getLocation();
+    }
+  }, [editable]); // No dependency on `location`
+  
   return (
     <View style={style}>
       {location ? (
@@ -79,7 +77,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ location, setLocation, edit
 
 const styles = StyleSheet.create({
   map: {
-    height: 300,
+    height: 200,
   },
   errorContainer: {
     alignItems: 'center',
