@@ -188,12 +188,12 @@ const ReportAccident = () => {
         />
         <TextBox
           label="Total Number of Affected"
-          keyboardType="number"
+          keyboardType="numeric"
           onChangeText={(text) => inputHandling('numAffecties', text)}
         />
         <TextBox
           label="Age of Affected"
-          keyboardType="number"
+          keyboardType="numeric"
           onChangeText={(text) => inputHandling('age', text)}
         />
         {/* <TextBox
