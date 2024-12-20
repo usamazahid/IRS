@@ -20,7 +20,7 @@ const LoginScreen = () => {
   const [mobile, setMobile] = useState('');
   const dispatch = useDispatch();
    const navigation = useNavigation();
-  const  {   user,isAuthenticated, permissions,loading ,error } = useSelector((state) => state.auth);
+  const  {   isAuthenticated,loading  } = useSelector((state) => state.auth);
  const { showSnackBar } = useSnackBar();
 
  

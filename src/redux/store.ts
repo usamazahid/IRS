@@ -1,24 +1,39 @@
-import { configureStore } from '@reduxjs/toolkit';
+import {configureStore, combineReducers} from '@reduxjs/toolkit';
 import thunk from 'redux-thunk';
-import { persistStore, persistReducer } from 'redux-persist';
+import {persistStore, persistReducer} from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // For React Native storage
 import authReducer from './slices/authSlice';
+import dropdownReducer from './slices/dropdownSlice';
 
-// Configuration for redux-persist
-const persistConfig = {
+// Configurations for redux-persist
+const authPersistConfig = {
   key: 'auth',
-  storage: AsyncStorage, // Use AsyncStorage for React Native
-  whitelist: ['isAuthenticated', 'user', 'role', 'permissions'], // Only persist relevant parts of state
+  storage: AsyncStorage,
+  whitelist: ['isAuthenticated', 'user', 'role', 'permissions'], // Only persist these keys
 };
 
-const persistedAuthReducer = persistReducer(persistConfig, authReducer);
+// Configurations for redux-persist
+const dropdownPersistConfig = {
+  key: 'root',
+  storage: AsyncStorage,
+  whitelist: [
+      'accidentTypes',
+    'patientVictim',
+    'vehicleInvolved',
+    'frequentlyUsedServices',
+    'ambulanceServiceData',
+  ], // Only persist these keys
+};
+
+const rootReducer = combineReducers({
+  auth: persistReducer(authPersistConfig, authReducer),
+  dropdown: persistReducer(dropdownPersistConfig,dropdownReducer), // Non-persisted reducer
+});
 
 const store = configureStore({
-  reducer: {
-    auth: persistedAuthReducer,
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({ 
+  reducer: rootReducer,
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'], // Ignore redux-persist actions
       },

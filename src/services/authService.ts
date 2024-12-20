@@ -6,7 +6,6 @@ const apiURL = API_BASE_URL;
 
 export const fetchUserByMobile = async (userId: string) => {
   try {
-    console.log("Current API URL:", API_BASE_URL);
     console.log('Fetching user by mobile number...');
     const path=`${apiURL}/irs/getUserData`;
     //  const path=`${apiURL}/users.json`
@@ -24,8 +23,6 @@ export const fetchUserByMobile = async (userId: string) => {
     // const data = await response.data;
     const obj = await response.data;
 
-    console.log("obj.data ",obj)
-
     // Check if data is valid
     // if (!data || data.length === 0) {
     //   throw new Error('Invalid Login Credentials');
@@ -33,7 +30,6 @@ export const fetchUserByMobile = async (userId: string) => {
     if (!obj || obj.length === 0) {
       throw new Error('Invalid Login Credentials');
     }
-    
     // Filter user by mobile number
     // const filteredUser = data.find((user:any) => user.data.some((item:any) => item.mobile_number === mobile));
     // if (!filteredUser) {
@@ -76,7 +72,6 @@ export const fetchRolesPermissions = async (userId: number) => {
 
     const obj =await response.data;
 
-   console.log("obj.data ",obj)
     // Check if data is valid
     // if (!data || data.length === 0) {
     //   throw new Error('No roles or permissions found');
@@ -103,7 +98,6 @@ export const fetchRolesPermissions = async (userId: number) => {
       // permissions: userPermissions.data.map((item: any) => item.permission_name)  // Return all permissions
       permissions: obj.map((item: any) => item.permission_name) 
     }
-    console.log(role_permission)
     return role_permission;
   } catch (error: any) {
     if (error.response) {

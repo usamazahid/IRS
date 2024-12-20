@@ -13,6 +13,7 @@ const SimpleDropDownMenu = ({ dataUrl, data, valueField, labelField, placeholder
     if (data) {
       setDropdownData(data); // Use passed data directly
       setLoading(false);
+      console.log('data set given');
     } else if (dataUrl) {
       const fetchData = async () => {
         try {
@@ -32,6 +33,7 @@ const SimpleDropDownMenu = ({ dataUrl, data, valueField, labelField, placeholder
       };
 
       fetchData();
+      console.log('data set fetched');
     }
   }, [data, dataUrl]);
 

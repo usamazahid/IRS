@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,8 +18,9 @@ import MapComponent from './components/MapComponent';
 import CameraComponent from './components/CameraComponent';
 import { readAudioFileAsBase64 } from '../utils/AudioUtils';
 import { submitAccidentReport } from '../services/accidentService';
-import {  useSelector } from 'react-redux';
 import { handleImageConversion } from '../utils/ImageUtils';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchReportDropdowns } from '../redux/slices/dropdownSlice'; // Import the action
 
 const ReportAccident = () => {
   const { user, role, permissions } = useSelector((state) => state.auth);
@@ -27,6 +28,22 @@ const ReportAccident = () => {
   const PATIENT_VICTIM_URL = `${API_BASE_URL}/irs/getPatientVictim`;
   const VECHILE_INVOLVED_URL = `${API_BASE_URL}/irs/getVehicleInvolved`;
   // const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/accident_types.json';
+
+  const dispatch = useDispatch();
+
+  // Access dropdown data, error, and loading state from Redux
+  const {accidentTypes,
+  patientVictim,
+  vehicleInvolved} = useSelector((state) => state.dropdown);
+
+  useEffect(() => {
+    // If no data in Redux, fetch from the API
+    if (!accidentTypes || !patientVictim || !vehicleInvolved) { 
+      console.log('data caling')
+        dispatch(fetchReportDropdowns())
+                  .unwrap().then(() => {});
+    }
+  }, [  patientVictim,accidentTypes,vehicleInvolved,dispatch]);
 
   const [formData, setFormData] = useState({
     gender: 'male',
@@ -145,6 +162,7 @@ const ReportAccident = () => {
             labelField="label"
             imageField="image"
             placeholder="Select Accident Type" // Pass the callback function
+            data={accidentTypes}
             onItemSelect={(value) => inputHandling('accidentTypeId', value.id)}
           />
 
@@ -157,6 +175,7 @@ const ReportAccident = () => {
             labelField="label"
             imageField="image"
             placeholder="Select Vechile Involved" // Pass the callback function
+            data={vehicleInvolved}
             onItemSelect={(value) => inputHandling('vehicleInvolvedId', value.id)}
           />
         <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
@@ -168,8 +187,8 @@ const ReportAccident = () => {
             labelField="label"
             imageField="image"
             placeholder="Select Patient Victim" // Pass the callback function
-            onItemSelect={(value) => {
-              console.log(value);
+            data={patientVictim}
+            onItemSelect={(value) => { 
               inputHandling('patientVictimId', value.id)}}
           />
         <SimpleDropDownMenu className="bg-slate-200"

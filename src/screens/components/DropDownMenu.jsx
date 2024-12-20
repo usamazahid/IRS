@@ -2,39 +2,46 @@ import React, { useState, useEffect } from 'react';
 import { SafeAreaView, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { SelectCountry } from 'react-native-element-dropdown';
 
-const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placeholder, onItemSelect }) => {
-  const [data, setData] = useState([]);
+const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placeholder, onItemSelect,dropDownData }) => {
+  const [data, setData] = useState(dropDownData || []);
   const [selectedValue, setSelectedValue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(dataUrl);
+ useEffect(() => {
+  if (dropDownData) {
+    console.log("Setting given data");
+    setData(dropDownData);
+    setLoading(false); // Immediately stop loading as data is provided
+  }else if(dataUrl){
 
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+      const fetchData = async () => {
+        try {
+          setLoading(true); // Ensure loading is true during fetch
+          const response = await fetch(dataUrl);
+
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+
+          const jsonData = await response.json();
+
+          const processedData = jsonData.map((item) => ({
+            ...item,
+            image_uri: item.image_uri || 'https://via.placeholder.com/150', // Add fallback image
+          }));
+
+          setData(processedData);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
         }
-
-        const jsonData = await response.json();
-
-        const processedData = jsonData.map((item) => ({
-          ...item,
-          image_uri: item.image_uri || 'https://via.placeholder.com/150', // Add fallback image
-        }));
-
-        console.log('Processed Data:', JSON.stringify(processedData, null, 2));
-        setData(processedData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [dataUrl]);
+      };
+      fetchData();
+  }
+  
+}, [dataUrl, dropDownData]);
 
   const handleSelect = (item) => { 
     setSelectedValue(item[valueField]);
@@ -71,7 +78,7 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
         data={data}
         valueField={valueField}
         labelField={labelField}
-        imageField="image"
+        imageField={imageField}
         placeholder={placeholder}
         searchPlaceholder="Search..."
         onChange={handleSelect}
