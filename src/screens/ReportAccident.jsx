@@ -18,7 +18,7 @@ import MapComponent from './components/MapComponent';
 import CameraComponent from './components/CameraComponent';
 import { readAudioFileAsBase64 } from '../utils/AudioUtils';
 import { submitAccidentReport } from '../services/accidentService';
-import { handleImageConversion } from '../utils/ImageUtils';
+import { compressImage } from '../utils/ImageUtils';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchReportDropdowns } from '../redux/slices/dropdownSlice'; // Import the action
 
@@ -62,7 +62,9 @@ const ReportAccident = () => {
     audioUri: null,
     age: '',
     status: 'PENDING',
-    nearestLandMark:''
+    nearestLandMark:'',
+    imageData:null,
+    audioData:null
   });
 
   const genderData = [
@@ -90,28 +92,11 @@ const ReportAccident = () => {
       const audioData = formData.audioUri
         ? await readAudioFileAsBase64(formData.audioUri)
         : null;
-      const imageData=formData.imageUri ? handleImageConversion(formData.imageUri):null;
+      const imageData=formData.imageUri ? (await compressImage(formData.imageUri)):null;
+      formData.imageData=imageData;
+      formData.audioData=audioData;
       const reportPayload=formData;
-      // const reportPayload = new FormData();
-      // Object.keys(formData).forEach((key) => {
-      //   if (key === 'imageUri' && imageData) {
-      //     reportPayload.append('imageUri', {
-      //       uri: formData[key],
-      //       name: 'photo.jpg',
-      //       type: 'image/jpeg',
-      //     });
-      //   } else if (key === 'audioUri' && audioData) {
-      //     reportPayload.append('audioUri', {
-      //       name: 'recording.mp3',
-      //       type: 'audio/mp3',
-      //       uri: formData.audioUri,
-      //     });
-      //   } else {
-      //     reportPayload.append(key, formData[key]);
-      //   }
-      // });
-      console.log('reportPayload : ',reportPayload);
-      const response = await submitAccidentReport(reportPayload);
+      const response = await submitAccidentReport(reportPayload); 
       if(response.id){
         NavigationService.navigate('Confirmation');
       }else{
@@ -142,7 +127,7 @@ const ReportAccident = () => {
           REPORT ACCIDENT 
         </Text>
 
-          <MapComponent 
+        <MapComponent 
         location={mapLocation} 
         setLocation={(region) => {
           setMapLocation(region);
