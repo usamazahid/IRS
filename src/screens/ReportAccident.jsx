@@ -30,7 +30,7 @@ const ReportAccident = () => {
   // const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/accident_types.json';
 
   const dispatch = useDispatch();
-
+  const [mapLocation,setMapLocation]=useState(null);
   // Access dropdown data, error, and loading state from Redux
   const {accidentTypes,
   patientVictim,
@@ -143,11 +143,14 @@ const ReportAccident = () => {
         </Text>
 
           <MapComponent 
-          location={formData.location}
-          setLocation={(location) =>
-            inputHandling('latitude', location.latitude) ||
-            inputHandling('longitude', location.longitude)
-          } style={styles.map} />
+        location={mapLocation} 
+        setLocation={(region) => {
+          setMapLocation(region);
+          inputHandling('latitude', region.latitude);
+          inputHandling('longitude', region.longitude);
+        }}
+      />
+
 
 
         <TextBox label="Nearest LandMark" onChangeText={(text) => inputHandling('nearestLandMark', text)}/>
