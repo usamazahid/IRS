@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity,useEffect } from 'react-native';
+import React, { useState,useEffect } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-gesture-handler';
 import { ArrowLeftIcon } from 'react-native-heroicons/solid';
@@ -19,7 +19,8 @@ const SignUpScreen = () => {
         name: '',
         mobileNumber: '',
         email: '',
-        password: ''
+        password: '',
+        username:''
     });
 
     const handleChange = (field, value) => setForm({ ...form, [field]: value });
@@ -65,6 +66,7 @@ useEffect(() => {
                 <TextBox label='NAME' value={form.name} onChangeText={(value) => handleChange('name', value)} />
                 <TextBox label='MOBILE NUMBER' keyboardType='phone-pad' hintText='e.g. 03001234567' value={form.mobileNumber} onChangeText={(value) => handleChange('mobileNumber', value)} />
                 <TextBox label="EMAIL (OPTIONAL)" keyboardType='email-address' value={form.email} onChangeText={(value) => handleChange('email', value)} />
+                <TextBox label="Username (OPTIONAL)" value={form.username} onChangeText={(value) => handleChange('username', value)} />
                 <TextBox label='PASSWORD' isPassword value={form.password} onChangeText={(value) => handleChange('password', value)} />
                 <CustomButton onPress={handleSignUp} title='SIGN UP' loading={loading} />
             </ScrollView>
