@@ -82,31 +82,66 @@ To learn more about React Native, take a look at the following resources:
 # Creating the release
 cd android/app
 
---> run : 
+## run to create sign key: 
       keytool -genkey -v -keystore android.keystore -alias androidkey -keyalg RSA -keysize 2048 -validity 10000
-
+--> name and last name: farman ali 
 --> password will be asked and other information : android
 --> name of keystore file (my-release-key.keystore): android.keystore
 --> file alias (my-release-key): androidkey
 
-edit android/app/build.gradle
+## to add sign in key edit android/app/build.gradle
 --> changing password you inserted, and use alias as my-key-alias in place of androiddebugkey
    signingConfigs {
-        debug {
+        release {
             storeFile file('android.keystore')
             storePassword 'android'
             keyAlias 'androidkey'
             keyPassword 'android'
         }
     }
+and also change debug to release:
+<!-- release {
+            // Caution! In production, you need to generate your own keystore file.
+            // see https://reactnative.dev/docs/signed-apk-android.
+            signingConfig signingConfigs.debug -->
+            to-->
+            signingConfig signingConfigs.release -->
+
+## versions handling
+edit android/app/build.gradle
+
+ defaultConfig {
+        applicationId "com.irs"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+    }
+    here change versionName and versionCode
+
+## using library version handling
+add first 
+npm install react-native-version
+first change the version in package.json file and then run command
+
+react-native-version --never-amend
 
 cd android
+or 
+./gradlew bundleRelease
 ./gradlew assembleRelease
 
 location of apk:
 file: android/app/build/outputs/apk/release/app-release.apk
 path: android\app\build\outputs\apk\release
 
+location of bundle file:
+android\app\build\outputs\bundle\release
 
-//port binding with backened
+# port binding with backened
 adb -s emulator-5554 forward tcp:8080 tcp:8080
+
+# for changing the package name or renaming
+npx react-native-rename 'name will be changed' -b 'new'
+example:
+npx react-native-rename 'simple math' -b 'com.notjustdev'
