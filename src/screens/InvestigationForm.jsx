@@ -20,7 +20,11 @@ import { readAudioFileAsBase64 } from '../utils/AudioUtils';
 import { submitAccidentReport } from '../services/accidentService';
 import { compressImage } from '../utils/ImageUtils';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchReportDropdowns } from '../redux/slices/dropdownSlice'; // Import the action
+import { fetchAllLovs } from '../redux/slices/dropdownSlice'; // Import the action
+import GenericDropDownMenu from './components/GenericDropDownMenu';
+import EvidenceToggle from './components/EvidenceToggle';
+import DynamicFormSection from './components/DynamicFormSection';
+import FollowUpActions from './components/FollowUpActions';
 
 const InvestigationForm = () => {
   const { user, role, permissions } = useSelector((state) => state.auth);
@@ -32,20 +36,46 @@ const InvestigationForm = () => {
   const dispatch = useDispatch();
   const [mapLocation,setMapLocation]=useState(null);
   // Access dropdown data, error, and loading state from Redux
-  const {accidentTypes,
-  patientVictim,
-  vehicleInvolved} = useSelector((state) => state.dropdown);
+  const {
+    accidentTypes,
+    vehicleInvolved,
+    patientVictim,
+    apparentCauses,
+    weatherConditions,
+    visibilityLevels,
+    roadSurfaceConditions,
+    roadTypes,
+    roadSignages,
+    faultAssessments,
+    caseReferredTo
+  } = useSelector((state) => state.dropdown);
 
   useEffect(() => {
     // If no data in Redux, fetch from the API
-    if (!accidentTypes || !patientVictim || !vehicleInvolved) { 
+    if (accidentTypes.length === 0 || weatherConditions.length === 0) { 
       console.log('data caling')
-        dispatch(fetchReportDropdowns())
+        dispatch(fetchAllLovs())
                   .unwrap().then(() => {});
     }
-  }, [  patientVictim,accidentTypes,vehicleInvolved,dispatch]);
+  }, [  accidentTypes,weatherConditions,dispatch]);
 
-  const [formData, setFormData] = useState({
+      // Handler for dynamic arrays
+    const handleArrayUpdate = (field, index, key, value) => {
+      const updatedArray = [...formData[field]];
+      updatedArray[index][key] = value;
+      setFormData(prev => ({ ...prev, [field]: updatedArray }));
+    };
+
+    // Add new entry to array
+    const addArrayEntry = (field, template) => {
+      setFormData(prev => ({ 
+        ...prev, 
+        [field]: [...prev[field], template] 
+      }));
+    };
+
+    const [formData, setFormData] = useState({
+    // Basic Info
     gender: 'male',
     latitude: null,
     longitude: null,
@@ -53,18 +83,55 @@ const InvestigationForm = () => {
     cause: '',
     description: '',
     numAffecties: '',
-    userId: user.id, // Replace with logged-in user ID
+    userId: user.id,
     patientVictimId: '',
-    createdAt: '',
-    vehicleInvolvedId: '',
+    nearestLandMark: '',
+    
+    // Vehicle and Drivers
+    drivers: [],
+    vehicles: [],
+    
+    // Casualties
+    casualties: [],
+    
+    // Accident Details
+    weatherCondition: '',
+    visibility: '',
+    roadSurfaceCondition: '',
+    roadType: '',
+    roadMarkings: '',
+    
+    // Evidence
     imageUri: null,
-    location: null,
     audioUri: null,
-    age: '',
-    status: 'PENDING',
-    nearestLandMark:'',
-    imageData:null,
-    audioData:null
+    videoUri: null,
+    imageData: null,
+    audioData: null,
+    evidence: {
+      photosTaken: false,
+      videosRecorded: false,
+      sketchPrepared: false
+    },
+    
+    // Officer Info
+    officerName: '',
+    officerDesignation: '',
+    officerContactNo: '',
+    preliminaryFault: '',
+    officerNotes: '',
+    
+    // Follow Up
+    followUp: {
+      firRegistered: false,
+      firNumber: '',
+      challanIssued: false,
+      challanNumber: '',
+      caseReferredTo: ''
+    },
+    
+    // Witnesses
+    witnesses: [],
+    vehicleFitnessDetails:[]
   });
 
   const genderData = [
@@ -73,6 +140,15 @@ const InvestigationForm = () => {
     {id:3,  label: 'Other', value: 'other' }
   ];
 
+    // Add this handler in your parent component
+  const handleArrayRemove = (field, index) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field].filter((_, i) => i !== index)
+    }));
+  };
+
+
   const inputHandling = (fieldName, data) => {
     console.log(data);
     setFormData((prev) => ({
@@ -80,14 +156,10 @@ const InvestigationForm = () => {
       [fieldName]: data,
     }));
   };
-  const handleSubmit = async () => {
-    if (
-      !formData.userId
-    ) {
-      Alert.alert('Error', 'Please fill in all required fields.');
-      return;
-    }
 
+   // Main submit handler
+  const handleSubmit = async () => {
+    // Validation logic here
     try {
       const audioData = formData.audioUri
         ? await readAudioFileAsBase64(formData.audioUri)
@@ -95,20 +167,22 @@ const InvestigationForm = () => {
       const imageData=formData.imageUri ? (await compressImage(formData.imageUri)):null;
       formData.imageData=imageData;
       formData.audioData=audioData;
-      const reportPayload=formData;
-      const response = await submitAccidentReport(reportPayload); 
-      if(response.id){
-        NavigationService.navigate('Confirmation');
-      }else{
-       Alert.alert('Error', `Error ${response.error}`);
-      }
-      
+      const payload = {
+        ...formData,
+        latitude: formData.latitude || 0.1,
+        longitude: formData.longitude || 0.1,
+        status: 'PENDING',
+        createdAt: new Date().toISOString()
+      };
+      console.log("final payload: ",payload);
+      const response = await submitAccidentReport(payload);
+      if(response.id) {NavigationService.navigate('Confirmation')}
+      else{ Alert.alert('Error', response.error)};
     } catch (error) {
-      Alert.alert('Error', 'Failed to submit the report. Please try again.');
+      Alert.alert('Error', 'Submission failed');
       console.error(error);
     }
   };
-
   return (
 
     <View className="flex-1 bg-white">
@@ -140,59 +214,8 @@ const InvestigationForm = () => {
 
         <TextBox label="Nearest LandMark" onChangeText={(text) => inputHandling('nearestLandMark', text)}/>
 
-          <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
-            {'ACCIDENT TYPE'}
-          </Text>
 
-        <SimpleDropDownMenu className="bg-slate-200"
-            dataUrl={ACCIDENT_TYPES_URL}
-            valueField="id"
-            labelField="label"
-            imageField="image"
-            placeholder="Select Accident Type" // Pass the callback function
-            data={accidentTypes}
-            onItemSelect={(value) => inputHandling('accidentTypeId', value.id)}
-          />
-
-           <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
-            {'VECHILE INVOLVED'}
-          </Text>
-        <SimpleDropDownMenu className="bg-slate-200"
-            dataUrl={VECHILE_INVOLVED_URL}
-            valueField="id"
-            labelField="label"
-            imageField="image"
-            placeholder="Select Vechile Involved" // Pass the callback function
-            data={vehicleInvolved}
-            onItemSelect={(value) => inputHandling('vehicleInvolvedId', value.id)}
-          />
-        <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
-            {'PATIENT VICTIM'}
-        </Text>
-        <SimpleDropDownMenu className="bg-slate-200"
-            dataUrl={PATIENT_VICTIM_URL}
-            valueField="id"
-            labelField="label"
-            imageField="image"
-            placeholder="Select Patient Victim" // Pass the callback function
-            data={patientVictim}
-            onItemSelect={(value) => { 
-              inputHandling('patientVictimId', value.id)}}
-          />
-        <SimpleDropDownMenu className="bg-slate-200"
-          // dataUrl={PATIENT_VICTIM_URL}
-          data={genderData}
-          valueField="id"
-          labelField="label"
-          placeholder="Select Gender" // Pass the callback function
-          onItemSelect={(value) => {
-            console.log(value);
-            inputHandling('gender', value.value)}}
-        />
-        <TextBox
-          label="Cause of Accident"
-          onChangeText={(text) => inputHandling('cause', text)}
-        />
+  
         <TextBox
           label="Total Number of Affected"
           keyboardType="numeric"
@@ -212,7 +235,280 @@ const InvestigationForm = () => {
         onChangeText={(text) => inputHandling('description', text)}
         />
 
+          <SimpleDropDownMenu className="bg-slate-200"
+            dataUrl={PATIENT_VICTIM_URL}
+            valueField="id"
+            labelField="label"
+            imageField="image"
+            placeholder="Select Patient Victim" // Pass the callback function
+            data={patientVictim}
+            onItemSelect={(value) => { 
+              inputHandling('patientVictimId', value.id)}}
+          />
 
+          <SimpleDropDownMenu className="bg-slate-200"
+            dataUrl={VECHILE_INVOLVED_URL}
+            valueField="id"
+            labelField="label"
+            imageField="image"
+            placeholder="Select Vechile Involved" // Pass the callback function
+            data={vehicleInvolved}
+            onItemSelect={(value) => inputHandling('vehicleInvolvedId', value.id)}
+          />
+
+
+        <GenericDropDownMenu className="bg-slate-200"
+          data={genderData}
+          valueField="id"
+          labelField="label"
+          placeholder="Select Gender" // Pass the callback function
+          onItemSelect={(value) => {
+            console.log(value);
+            inputHandling('gender', value.value)}}
+        />
+       
+         {/* Environmental Factors */}
+          <Text className="text-xl font-bold my-2">Environmental Conditions</Text> 
+          
+          <GenericDropDownMenu className="bg-slate-200"
+              dataUrl={ACCIDENT_TYPES_URL}
+              valueField="id"
+              labelField="label"
+              imageField="image"
+              placeholder="Select Accident Type" // Pass the callback function
+              data={accidentTypes}
+              onItemSelect={(value) => inputHandling('accidentTypeId', value.id)}
+            />
+
+             <GenericDropDownMenu className="bg-slate-200"
+              data={apparentCauses}
+              valueField="id"
+              labelField="cause"
+              imageField="image"
+              placeholder="Select Apparent Cause"
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, cause: item.cause }))}
+            />
+            
+            <GenericDropDownMenu className="bg-slate-200"
+              data={weatherConditions}
+              valueField="id"
+              labelField="condition"
+              imageField="image"
+              placeholder="Select Weather"
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, weatherCondition: item.condition }))}
+            />
+
+            <GenericDropDownMenu className="bg-slate-200"
+              data={visibilityLevels}
+              placeholder="Select Visibility"
+              valueField="id"
+              labelField="level"
+              imageField="image"
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, visibility: item.level }))}
+            />
+            <GenericDropDownMenu className="bg-slate-200"
+              data={roadSurfaceConditions}
+              valueField="id"
+              labelField="condition"
+              imageField="image"
+              placeholder="Select Road Surface Conditions"
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, roadSurfaceCondition: item.condition }))}
+            />
+            <GenericDropDownMenu className="bg-slate-200"
+              data={roadTypes}
+              valueField="id"
+              labelField="type"
+              imageField="image"
+              placeholder="Select Road Type"
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, roadType: item.type }))}
+            />
+             <GenericDropDownMenu className="bg-slate-200"
+              data={roadSignages}
+              valueField="id"
+              labelField="status"
+              imageField="image"
+              placeholder="Select Road Markings / Signage"
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, roadMarkings: item.status }))}
+            />
+        {/* // VEHICLE FITNESS & DOCUMENT VERIFICATION */}
+           <Text className="text-xl font-bold my-2">VEHICLE FITNESS & DOCUMENT VERIFICATION</Text>
+        <DynamicFormSection
+          title="Add Vehicle Fitness Details"
+          items={formData.vehicleFitnessDetails}
+          fields={[
+            {
+              label: 'Vehicle Number',
+              key: 'vehicleNo',
+              type: 'text'
+            },
+            {
+              label: 'Select Fitness Certificate Valid',
+              key: 'fitnessCertificateValid',
+              type: 'dropdown',
+              data: [
+                { id: 1, label: 'Yes', value: true },
+                { id: 2, label: 'No', value: false }
+              ],
+              labelField: 'label'
+            },
+            {
+              label: 'Expiry Date',
+              key: 'expiryDate',
+              type: 'date'
+            },
+            {
+              label: 'Select Road Tax Status',
+              key: 'roadTaxStatus',
+              type: 'dropdown',
+              data: [
+                { id: 1, label: 'Paid' },
+                { id: 2, label: 'Unpaid' },
+                { id: 3, label: 'Pending' }
+              ],
+              labelField: 'label'
+            },
+            {
+              label: 'Select Insurance Status',
+              key: 'insuranceStatus',
+              type: 'dropdown',
+              data: [
+                { id: 1, label: 'Active' },
+                { id: 2, label: 'Expired' },
+                { id: 3, label: 'Pending Renewal' }
+              ],
+              labelField: 'label'
+            }
+          ]}
+          onAdd={() => addArrayEntry('vehicleFitnessDetails', {
+            vehicleNo: '',
+            fitnessCertificateValid: true,
+            expiryDate: '',
+            roadTaxStatus: '',
+            insuranceStatus: ''
+          })}
+          onUpdate={(index, key, value) => handleArrayUpdate('vehicleFitnessDetails', index, key, value)}
+          onRemove={(index) => handleArrayRemove('vehicleFitnessDetails', index)}
+        />
+
+        {/* Vehicles Involved */}
+
+           <Text className="text-xl font-bold my-2">VEHICLE INVOLVED</Text>
+          <DynamicFormSection
+            title="Add Vehicles Involved"
+            items={formData.vehicles}
+            fields={[
+              { label: 'Registration No', key: 'registration' },
+              { label: 'Select Vehicle Type', key: 'type', type: 'dropdown', data: vehicleInvolved,labelField:'label' },
+              { label: 'Select Condition', key: 'condition', type: 'dropdown', 
+                data: [{id:1,label:'Minor'}, {id:2,label:'Major'}, {id:3,label:'Total Loss'}],labelField:'label' }
+            ]}
+            onAdd={() => addArrayEntry('vehicles', { registration: '', type: '', condition: '' })}
+            onUpdate={(index, key, value) => handleArrayUpdate('vehicles', index, key, value)}
+            onRemove={(index) => handleArrayRemove('vehicles', index)}
+
+          />
+
+          {/* Driver Details */}
+          
+           <Text className="text-xl font-bold my-2">Drivers Details</Text>
+          <DynamicFormSection
+            title="Add Drivers Involved"
+            items={formData.drivers}
+            fields={[
+              { label: 'Name', key: 'name' },
+              { label: 'CNIC', key: 'cnicNo' },
+              { label: 'License No', key: 'licenseNo' },
+              { label: 'Contact', key: 'contactNo' }
+            ]}
+            onAdd={() => addArrayEntry('drivers', { name: '', cnicNo: '', licenseNo: '', contactNo: '' })}
+            onUpdate={(index, key, value) => handleArrayUpdate('drivers', index, key, value)}
+            onRemove={(index) => handleArrayRemove('drivers', index)}
+          />
+
+          {/* Casualties Section */}
+          
+           <Text className="text-xl font-bold my-2">Casualties/Passengers/Injured</Text>
+          <DynamicFormSection
+            title="Add Casualties/Passengers"
+            items={formData.casualties}
+            fields={[
+              { label: 'Select Type', key: 'type', type: 'dropdown', data: [{id:1,label:'Casualities'}, {id:2,label:'Passengers'}, {id:3,label:'Injured'}],labelField:'label' },
+              { label: 'Name', key: 'name' },
+              { label: 'Hospital', key: 'hospitalName' },
+              { label: 'Select Injury Severity', key: 'injurySeverity', 
+                type: 'dropdown', data: [{id:1,label:'Fatal'}, {id:2,label:'Major'}, {id:3,label:'Minor'}],labelField:'label' }
+            ]}
+            onAdd={() => addArrayEntry('casualties', { type: '', name: '', hospitalName: '', injurySeverity: '' })}
+            onUpdate={(index, key, value) => handleArrayUpdate('casualties', index, key, value)}
+            onRemove={(index) => handleArrayRemove('casualties', index)}
+          />
+  
+          {/* witnesses Section */}
+          <Text className="text-xl font-bold my-2">Witness Details (if Available)</Text>
+          <DynamicFormSection
+            title="Add Witness"
+            items={formData.witnesses}
+            fields={[
+              { label: 'Name', key: 'name' },
+              { label: 'Contact Number', key: 'contactNo' },
+              { label: 'Address', key: 'address' },
+              ]}
+            onAdd={() => addArrayEntry('witnesses', { name: '', contactNo: '', address: '' })}
+            onUpdate={(index, key, value) => handleArrayUpdate('witnesses', index, key, value)}
+            onRemove={(index) => handleArrayRemove('witnesses', index)}
+          />
+
+        {/* Evidence Section */}
+          <Text className="text-xl font-bold my-2">Evidence Collection</Text>
+          <View className="flex-row justify-between mb-4">
+            <EvidenceToggle
+              label="Photos"
+              value={formData.evidence.photosTaken}
+              onValueChange={(v) => setFormData(prev => ({
+                ...prev,
+                evidence: { ...prev.evidence, photosTaken: v }
+              }))}
+            />
+            <EvidenceToggle
+              label="Sketch"
+              value={formData.evidence.sketchPrepared}
+              onValueChange={(v) => setFormData(prev => ({
+                ...prev,
+                evidence: { ...prev.evidence, sketchPrepared: v }
+              }))}
+            />
+            <EvidenceToggle
+              label="Video"
+              value={formData.evidence.videosRecorded}
+              onValueChange={(v) => setFormData(prev => ({
+                ...prev,
+                evidence: { ...prev.evidence, videosRecorded: v }
+              }))}
+            />
+          </View>
+        {/*  INITIAL OBSERVATIONS BY INVESTIGATING OFFICER */}
+        
+          <Text className="text-xl font-bold my-2">INITIAL OBSERVATIONS BY INVESTIGATING OFFICER</Text>
+          <GenericDropDownMenu className="bg-slate-200"
+              data={faultAssessments}
+              valueField="id"
+              labelField="fault"
+              imageField="image"
+              placeholder="Select Preliminary Fault Assessment"
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, preliminaryFault: item.fault }))}
+            /> 
+
+              <TextBox label="Observations/Notes"
+              onChangeText={(text) => inputHandling('officerNotes', text)}
+              />
+
+          <Text className="text-xl font-bold my-2">FOLLOW-UP ACTIONS</Text>
+          <FollowUpActions onChange={(data) => {
+        setFormData(prev => ({
+          ...prev,
+          followUp: data
+        }));
+      }} dropDownData={caseReferredTo}/>
       <CameraComponent onCapture={(uri) => inputHandling('imageUri', uri)} editable={true}  /> 
       {/* <CameraComponent initialUri={savedUri} editable={false} /> */}
 

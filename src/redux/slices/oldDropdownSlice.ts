@@ -3,37 +3,21 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 
 
 interface DropdownState {
-  ambulanceServiceData: Object[] | null;
+  ambulanceServiceData: Object[] | null; // Add other dropdown keys if necessary
   frequentlyUsedServices: Object[] | null;
   accidentTypes: Object[] | null;
   patientVictim: Object[] | null;
   vehicleInvolved: Object[] | null;
-  apparentCauses: Object[] | null;
-  weatherConditions: Object[] | null;
-  visibilityLevels: Object[] | null;
-  roadSurfaceConditions: Object[] | null;
-  roadTypes: Object[] | null;
-  roadSignages: Object[] | null;
-  caseReferredTo: Object[] | null;
-  faultAssessments: Object[] | null;
   error: string | null;
   loading: boolean;
 }
 
 const initialState: DropdownState = {
-  accidentTypes: [],
-  patientVictim: [],
-  vehicleInvolved: [],
-  apparentCauses: [],
-  weatherConditions: [],
-  visibilityLevels: [],
-  roadSurfaceConditions: [],
-  roadTypes: [],
-  roadSignages: [],
-  caseReferredTo: [],
-  faultAssessments: [],
-  ambulanceServiceData: [],
-  frequentlyUsedServices: [],
+  accidentTypes: null,
+  patientVictim: null,
+  vehicleInvolved: null,
+  ambulanceServiceData: null, // Add other dropdown keys if necessary
+  frequentlyUsedServices: null,
   error: null,
   loading: false,
 };
@@ -69,31 +53,6 @@ export const origanizationData = createAsyncThunk(
   },
 );
 
-export const fetchAllLovs = createAsyncThunk(
-  'dropdown/fetchAllLovs',
-  async (_, {rejectWithValue}) => {
-    try {
-      const lovs = await getDropDownData('fetchAllLovs');
-      return {
-        accidentTypes: lovs.accidentTypes,
-        patientVictim: lovs.patientVictims,
-        vehicleInvolved: lovs.vehicleInvolved,
-        apparentCauses: lovs.apparentCauses,
-        weatherConditions: lovs.weatherConditions,
-        visibilityLevels: lovs.visibilityLevels,
-        roadSurfaceConditions: lovs.roadSurfaceConditions,
-        roadTypes: lovs.roadTypes,
-        roadSignages: lovs.roadSignages,
-        caseReferredTo: lovs.caseReferredTo,
-        faultAssessments: lovs.faultAssessments,
-      };
-    } catch (error: any) {
-      console.error('Error fetching LOV data:', error);
-      return rejectWithValue('Failed to fetch LOVs');
-    }
-  },
-);
-
 // Async thunk for fetching dropdown data
 export const fetchReportDropdowns = createAsyncThunk(
   'dropdown/fetchReportDropdowns',
@@ -102,6 +61,7 @@ export const fetchReportDropdowns = createAsyncThunk(
       const accidentTypes = await getDropDownData('getAccidentTypes');
       const patientVictim=await getDropDownData('getPatientVictim');
       const vehicleInvolved=await getDropDownData('getVehicleInvolved');
+
 
       return {
         accidentTypes : accidentTypes,
@@ -153,29 +113,7 @@ const dropdownSlice = createSlice({
       .addCase(fetchReportDropdowns.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      })
-        .addCase(fetchAllLovs.pending, state => {
-          state.loading = true;
-          state.error = null;
-        })
-        .addCase(fetchAllLovs.fulfilled, (state, action) => {
-          state.loading = false;
-          state.accidentTypes = action.payload.accidentTypes;
-          state.patientVictim = action.payload.patientVictim;
-          state.vehicleInvolved = action.payload.vehicleInvolved;
-          state.apparentCauses = action.payload.apparentCauses;
-          state.weatherConditions = action.payload.weatherConditions;
-          state.visibilityLevels = action.payload.visibilityLevels;
-          state.roadSurfaceConditions = action.payload.roadSurfaceConditions;
-          state.roadTypes = action.payload.roadTypes;
-          state.roadSignages = action.payload.roadSignages;
-          state.caseReferredTo = action.payload.caseReferredTo;
-          state.faultAssessments = action.payload.faultAssessments;
-        })
-        .addCase(fetchAllLovs.rejected, (state, action) => {
-          state.loading = false;
-          state.error = action.payload as string;
-        });
+      });
   },
 });
 

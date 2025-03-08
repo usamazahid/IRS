@@ -32,3 +32,4 @@ export const getDropDownData = async (urlPath: String) => {
     throw error;
   }
 };
+

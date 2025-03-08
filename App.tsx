@@ -21,6 +21,7 @@ import CreateUserScreen from './src/screens/CreateUserScreen';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SnackBarProvider } from './src/context/SnackBarContext';
 import AmbulanceStatsScreen from './src/screens/AmbulanceStatsScreen';
+import InvestigationForm from './src/screens/InvestigationForm';
  
 const Stack = createStackNavigator();
 
@@ -59,7 +60,7 @@ const App: React.FC = () => {
           <Stack.Screen name="InvestigationForm">
             {(props) => (
               <AuthGuard {...props} requiredPermissions={['investigation_form']}>
-                <ReportAccident />
+                <InvestigationForm />
               </AuthGuard>
             )}
           </Stack.Screen>

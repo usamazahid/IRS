@@ -16,13 +16,22 @@ const authPersistConfig = {
 const dropdownPersistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: [
-      'accidentTypes',
+  blacklist: ['loading', 'error'], // Don't persist loading state and errors
+  whielist: [
+    'accidentTypes',
     'patientVictim',
     'vehicleInvolved',
-    'frequentlyUsedServices',
+    'apparentCauses',
+    'weatherConditions',
+    'visibilityLevels',
+    'roadSurfaceConditions',
+    'roadTypes',
+    'roadSignages',
+    'caseReferredTo',
+    'faultAssessments',
     'ambulanceServiceData',
-  ], // Only persist these keys
+    'frequentlyUsedServices',
+  ],
 };
 
 const rootReducer = combineReducers({
@@ -36,6 +45,10 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'], // Ignore redux-persist actions
+        warnAfter: 100,
+      },
+      immutableCheck: {
+        warnAfter: 100,
       },
     }),
 });
