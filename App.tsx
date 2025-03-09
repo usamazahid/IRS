@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import  { navigationRef } from './src/context/NavigationService'; // Adjust if needed
@@ -22,10 +22,13 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { SnackBarProvider } from './src/context/SnackBarContext';
 import AmbulanceStatsScreen from './src/screens/AmbulanceStatsScreen';
 import InvestigationForm from './src/screens/InvestigationForm';
- 
+import { setupNetworkListener } from './src/services/OfflineService';
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
+   useEffect(() => {
+    setupNetworkListener(); // Start listening for network changes
+  }, []);
   return (
     <AuthProvider>
        <PaperProvider>

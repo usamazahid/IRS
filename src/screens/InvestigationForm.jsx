@@ -25,7 +25,8 @@ import GenericDropDownMenu from './components/GenericDropDownMenu';
 import EvidenceToggle from './components/EvidenceToggle';
 import DynamicFormSection from './components/DynamicFormSection';
 import FollowUpActions from './components/FollowUpActions';
-
+import NetInfo from '@react-native-community/netinfo';
+import { saveReportOffline } from '../services/OfflineService';
 const InvestigationForm = () => {
   const { user, role, permissions } = useSelector((state) => state.auth);
   const ACCIDENT_TYPES_URL = `${API_BASE_URL}/irs/getAccidentTypes`;
@@ -49,6 +50,9 @@ const InvestigationForm = () => {
     faultAssessments,
     caseReferredTo
   } = useSelector((state) => state.dropdown);
+
+  // Add state for submission status
+const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // If no data in Redux, fetch from the API
@@ -161,27 +165,51 @@ const InvestigationForm = () => {
   const handleSubmit = async () => {
     // Validation logic here
     try {
+    setIsSubmitting(true);
+
       const audioData = formData.audioUri
         ? await readAudioFileAsBase64(formData.audioUri)
         : null;
       const imageData=formData.imageUri ? (await compressImage(formData.imageUri)):null;
       formData.imageData=imageData;
       formData.audioData=audioData;
-      const payload = {
+      const reportPayload = {
         ...formData,
         latitude: formData.latitude || 0.1,
         longitude: formData.longitude || 0.1,
         status: 'PENDING',
         createdAt: new Date().toISOString()
       };
-      console.log("final payload: ",payload);
-      const response = await submitAccidentReport(payload);
-      if(response.id) {NavigationService.navigate('Confirmation')}
-      else{ Alert.alert('Error', response.error)};
+       const netInfo = await NetInfo.fetch();
+      
+      if (!netInfo.isConnected  && !netInfo.isInternetReachable) {
+        // 🛑 No internet, save the report offline immediately
+        Alert.alert('No Internet', 'Saving report offline for later submission.');
+        await saveReportOffline(reportPayload);
+        NavigationService.navigate('Confirmation');
+        return;
+      } else {
+        try {
+          const response = await submitAccidentReport(reportPayload);
+          if (response.id) {
+            NavigationService.navigate('Confirmation');
+          } else {
+            Alert.alert('Error', `Submission failed: ${response.error}`);
+          }
+        } catch (error) {
+          console.error('Submission error:', error);
+          Alert.alert('Error', 'Failed to submit the report. Saving offline...');
+          await saveReportOffline(reportPayload);
+           NavigationService.navigate('Confirmation');
+        }
+      }
     } catch (error) {
       Alert.alert('Error', 'Submission failed');
       console.error(error);
-    }
+    }finally {
+    setIsSubmitting(false);
+  }
+  
   };
   return (
 
@@ -268,7 +296,7 @@ const InvestigationForm = () => {
         />
        
          {/* Environmental Factors */}
-          <Text className="text-xl font-bold my-2">Environmental Conditions</Text> 
+          <Text className="text-xl font-bold my-2 text-gray-800">Environmental Conditions</Text> 
           
           <GenericDropDownMenu className="bg-slate-200"
               dataUrl={ACCIDENT_TYPES_URL}
@@ -331,7 +359,7 @@ const InvestigationForm = () => {
               onItemSelect={(item) => setFormData(prev => ({ ...prev, roadMarkings: item.status }))}
             />
         {/* // VEHICLE FITNESS & DOCUMENT VERIFICATION */}
-           <Text className="text-xl font-bold my-2">VEHICLE FITNESS & DOCUMENT VERIFICATION</Text>
+           <Text className="text-xl font-bold my-2 text-gray-800">VEHICLE FITNESS & DOCUMENT VERIFICATION</Text>
         <DynamicFormSection
           title="Add Vehicle Fitness Details"
           items={formData.vehicleFitnessDetails}
@@ -349,7 +377,8 @@ const InvestigationForm = () => {
                 { id: 1, label: 'Yes', value: true },
                 { id: 2, label: 'No', value: false }
               ],
-              labelField: 'label'
+              labelField: 'label',
+              valueField: 'value'
             },
             {
               label: 'Expiry Date',
@@ -365,7 +394,8 @@ const InvestigationForm = () => {
                 { id: 2, label: 'Unpaid' },
                 { id: 3, label: 'Pending' }
               ],
-              labelField: 'label'
+              labelField: 'label',
+              valueField: 'label'
             },
             {
               label: 'Select Insurance Status',
@@ -377,6 +407,7 @@ const InvestigationForm = () => {
                 { id: 3, label: 'Pending Renewal' }
               ],
               labelField: 'label'
+              ,valueField: 'label'
             }
           ]}
           onAdd={() => addArrayEntry('vehicleFitnessDetails', {
@@ -392,15 +423,15 @@ const InvestigationForm = () => {
 
         {/* Vehicles Involved */}
 
-           <Text className="text-xl font-bold my-2">VEHICLE INVOLVED</Text>
+           <Text className="text-xl font-bold my-2 text-gray-800">VEHICLE INVOLVED</Text>
           <DynamicFormSection
             title="Add Vehicles Involved"
             items={formData.vehicles}
             fields={[
               { label: 'Registration No', key: 'registration' },
-              { label: 'Select Vehicle Type', key: 'type', type: 'dropdown', data: vehicleInvolved,labelField:'label' },
+              { label: 'Select Vehicle Type', key: 'type', type: 'dropdown', data: vehicleInvolved,labelField:'label',valueField: 'label' },
               { label: 'Select Condition', key: 'condition', type: 'dropdown', 
-                data: [{id:1,label:'Minor'}, {id:2,label:'Major'}, {id:3,label:'Total Loss'}],labelField:'label' }
+                data: [{id:1,label:'Minor'}, {id:2,label:'Major'}, {id:3,label:'Total Loss'}],labelField:'label',valueField: 'label' }
             ]}
             onAdd={() => addArrayEntry('vehicles', { registration: '', type: '', condition: '' })}
             onUpdate={(index, key, value) => handleArrayUpdate('vehicles', index, key, value)}
@@ -410,7 +441,7 @@ const InvestigationForm = () => {
 
           {/* Driver Details */}
           
-           <Text className="text-xl font-bold my-2">Drivers Details</Text>
+           <Text className="text-xl font-bold my-2 text-gray-800">Drivers Details</Text>
           <DynamicFormSection
             title="Add Drivers Involved"
             items={formData.drivers}
@@ -427,16 +458,16 @@ const InvestigationForm = () => {
 
           {/* Casualties Section */}
           
-           <Text className="text-xl font-bold my-2">Casualties/Passengers/Injured</Text>
+           <Text className="text-xl font-bold my-2 text-gray-800">Casualties/Passengers/Injured</Text>
           <DynamicFormSection
             title="Add Casualties/Passengers"
             items={formData.casualties}
             fields={[
-              { label: 'Select Type', key: 'type', type: 'dropdown', data: [{id:1,label:'Casualities'}, {id:2,label:'Passengers'}, {id:3,label:'Injured'}],labelField:'label' },
+              { label: 'Select Type', key: 'type', type: 'dropdown', data: [{id:1,label:'Casualities'}, {id:2,label:'Passengers'}, {id:3,label:'Injured'}],labelField:'label',valueField: 'label' },
               { label: 'Name', key: 'name' },
               { label: 'Hospital', key: 'hospitalName' },
               { label: 'Select Injury Severity', key: 'injurySeverity', 
-                type: 'dropdown', data: [{id:1,label:'Fatal'}, {id:2,label:'Major'}, {id:3,label:'Minor'}],labelField:'label' }
+                type: 'dropdown', data: [{id:1,label:'Fatal'}, {id:2,label:'Major'}, {id:3,label:'Minor'}],labelField:'label',valueField: 'label' }
             ]}
             onAdd={() => addArrayEntry('casualties', { type: '', name: '', hospitalName: '', injurySeverity: '' })}
             onUpdate={(index, key, value) => handleArrayUpdate('casualties', index, key, value)}
@@ -444,7 +475,7 @@ const InvestigationForm = () => {
           />
   
           {/* witnesses Section */}
-          <Text className="text-xl font-bold my-2">Witness Details (if Available)</Text>
+          <Text className="text-xl font-bold my-2 text-gray-800">Witness Details (if Available)</Text>
           <DynamicFormSection
             title="Add Witness"
             items={formData.witnesses}
@@ -458,8 +489,33 @@ const InvestigationForm = () => {
             onRemove={(index) => handleArrayRemove('witnesses', index)}
           />
 
-        {/* Evidence Section */}
-          <Text className="text-xl font-bold my-2">Evidence Collection</Text>
+       
+        {/*  INITIAL OBSERVATIONS BY INVESTIGATING OFFICER */}
+        
+          <Text className="text-xl font-bold my-2 text-gray-800">INITIAL OBSERVATIONS BY INVESTIGATING OFFICER</Text>
+          <GenericDropDownMenu className="bg-slate-200"
+              data={faultAssessments}
+              valueField="id"
+              labelField="fault"
+              imageField="image"
+              placeholder="Select Preliminary Fault Assessment"
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, preliminaryFault: item.fault }))}
+            /> 
+
+              <TextBox label="Observations/Notes"
+              onChangeText={(text) => inputHandling('officerNotes', text)}
+              />
+
+          <Text className="text-xl font-bold my-2 text-gray-800">FOLLOW-UP ACTIONS</Text>
+          <FollowUpActions onChange={(data) => {
+        setFormData(prev => ({
+          ...prev,
+          followUp: data
+        }));
+      }} dropDownData={caseReferredTo}/>
+
+       {/* Evidence Section */}
+          <Text className="text-xl font-bold my-2 text-gray-800">Evidence Collection</Text>
           <View className="flex-row justify-between mb-4">
             <EvidenceToggle
               label="Photos"
@@ -486,29 +542,7 @@ const InvestigationForm = () => {
               }))}
             />
           </View>
-        {/*  INITIAL OBSERVATIONS BY INVESTIGATING OFFICER */}
-        
-          <Text className="text-xl font-bold my-2">INITIAL OBSERVATIONS BY INVESTIGATING OFFICER</Text>
-          <GenericDropDownMenu className="bg-slate-200"
-              data={faultAssessments}
-              valueField="id"
-              labelField="fault"
-              imageField="image"
-              placeholder="Select Preliminary Fault Assessment"
-              onItemSelect={(item) => setFormData(prev => ({ ...prev, preliminaryFault: item.fault }))}
-            /> 
 
-              <TextBox label="Observations/Notes"
-              onChangeText={(text) => inputHandling('officerNotes', text)}
-              />
-
-          <Text className="text-xl font-bold my-2">FOLLOW-UP ACTIONS</Text>
-          <FollowUpActions onChange={(data) => {
-        setFormData(prev => ({
-          ...prev,
-          followUp: data
-        }));
-      }} dropDownData={caseReferredTo}/>
       <CameraComponent onCapture={(uri) => inputHandling('imageUri', uri)} editable={true}  /> 
       {/* <CameraComponent initialUri={savedUri} editable={false} /> */}
 
@@ -518,7 +552,8 @@ const InvestigationForm = () => {
       {/* Show the player if there is recorded audio */}
       {formData.audioUri && <AudioPlayer audioPath={formData.audioUri} />}
 
-        <CustomButton onPress={handleSubmit} title="SUBMIT" />
+        <CustomButton onPress={handleSubmit} title="SUBMIT"  disabled={isSubmitting}
+        loading={isSubmitting}/>
       </ScrollView>
     </View>
 

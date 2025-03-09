@@ -47,7 +47,7 @@ const DynamicFormSection = ({title, items, fields, onAdd, onUpdate,onRemove}) =>
                     onUpdate(
                       index,
                       field.key,
-                      selected[field.labelField || 'id'],
+                      selected[field.valueField || field.labelField || 'id'],
                     )
                   }
                 />

@@ -52,6 +52,7 @@ const FollowUpActions = ({onChange,dropDownData}) => {
           <TextInput
             style={styles.input}
             placeholder="FIR Number"
+            placeholderTextColor="#7f8c8d" // 🔹 Set a visible placeholder color (light gray)
             value={firNumber}
             onChangeText={text => {
               setFirNumber(text);
@@ -78,6 +79,7 @@ const FollowUpActions = ({onChange,dropDownData}) => {
           <TextInput
             style={styles.input}
             placeholder="Challan Number"
+            placeholderTextColor="#7f8c8d" // 🔹 Set a visible placeholder color (light gray)
             value={challanNumber}
             onChangeText={text => {
               setChallanNumber(text);
@@ -130,6 +132,7 @@ const styles = StyleSheet.create({
     color: '#34495e',
   },
   input: {
+    color:'black',
     borderWidth: 1,
     borderColor: '#bdc3c7',
     borderRadius: 4,
