@@ -459,10 +459,22 @@ const [capturedImages, setCapturedImages] = useState([]);
             title="Add Vehicles Involved"
             items={formData.vehicles}
             fields={[
-              { label: 'Registration No', key: 'registration' },
+              { label: 'Registration No', key: 'registrationNo' },
               { label: 'Select Vehicle Type', key: 'type', type: 'dropdown', data: vehicleInvolved,labelField:'label',valueField: 'label' },
               { label: 'Select Condition', key: 'condition', type: 'dropdown', 
-                data: [{id:1,label:'Minor'}, {id:2,label:'Major'}, {id:3,label:'Total Loss'}],labelField:'label',valueField: 'label' }
+                data: [{id:1,label:'Minor'}, {id:2,label:'Major'}, {id:3,label:'Total Loss'}],labelField:'label',valueField: 'label' },
+                {
+                  label: 'Select Vehicle Fitness Certificate Status',
+                  key: 'fitnessCertificateStatus',
+                  type: 'dropdown',
+                  data: [
+                    { id: 1, label: 'Valid' },
+                    { id: 2, label: 'Expired' },
+                    { id: 3, label: 'Not Available' }
+                  ],
+                  labelField: 'label'
+                  ,valueField: 'label'
+                }
             ]}
             onAdd={() => addArrayEntry('vehicles', { registration: '', type: '', condition: '' })}
             onUpdate={(index, key, value) => handleArrayUpdate('vehicles', index, key, value)}
