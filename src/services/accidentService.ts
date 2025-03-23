@@ -28,7 +28,7 @@ export const submitAccidentReport = async (reportData: any) => {
   }
 };
 
-export const getReportData = async (userId: string, reportId: string) => {
+export const getReportData = async (userId: string) => {
   try {
     // Construct the URL with query parameters
     const path = `${apiURL}/irs/getJoinedReportByUserId/${userId}`;
@@ -49,6 +49,35 @@ export const getReportData = async (userId: string, reportId: string) => {
       console.error('Headers:', error.response.headers);
     } else if (error.request) {
       console.error('Request Error:', error.request);
+    } else {
+      console.error('Error:', error.message);
+    }
+    throw error;
+  }
+};
+
+
+export const getHeatMapData = async (range: string) => {
+  try {
+    // Construct the API URL
+    const path = `${apiURL}/irs/heatmap/${range}`;
+
+    // Send GET request to the API
+    const response = await axios.get(path, {
+      headers: { Accept: 'application/json' },
+      timeout: 10000, // Timeout after 10 seconds
+    });
+
+    return response.data; // Return response data
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        console.error('Response Error:', error.response.data);
+        console.error('Status Code:', error.response.status);
+        console.error('Headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('Request Error:', error.request);
+      }
     } else {
       console.error('Error:', error.message);
     }

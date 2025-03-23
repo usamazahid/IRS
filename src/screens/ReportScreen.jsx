@@ -6,6 +6,7 @@ import { ArrowLeftIcon } from 'react-native-heroicons/solid';
 import CustomButton from './components/CustomButton';
 import NavigationService from '../context/NavigationService';
 import TopBar from './components/TopBarComponent';
+import AccidentHeatmap from './components/AccidentHeatmap';
 const ReportScreen = ( ) => {
   return (
     <SafeAreaView className="flex-1 bg-slate-200 bg-white">
@@ -20,9 +21,9 @@ const ReportScreen = ( ) => {
         <Text className="text-center text-gray-800 text-2xl mb-4">
           Report Screen
         </Text>
-
-
-      
+        <AccidentHeatmap 
+        range="6m"
+      />
 
       <CustomButton
         onPress={() => NavigationService.navigate('Home')}
