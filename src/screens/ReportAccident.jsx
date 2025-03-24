@@ -22,13 +22,16 @@ import { compressImage } from '../utils/ImageUtils';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchReportDropdowns } from '../redux/slices/dropdownSlice'; // Import the action
 
+import NetInfo from '@react-native-community/netinfo';
+import { saveReportOffline } from '../services/OfflineService';
 const ReportAccident = () => {
   const { user, role, permissions } = useSelector((state) => state.auth);
   const ACCIDENT_TYPES_URL = `${API_BASE_URL}/irs/getAccidentTypes`;
   const PATIENT_VICTIM_URL = `${API_BASE_URL}/irs/getPatientVictim`;
   const VECHILE_INVOLVED_URL = `${API_BASE_URL}/irs/getVehicleInvolved`;
   // const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/accident_types.json';
-
+  // Add state for submission status
+const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
   const [mapLocation,setMapLocation]=useState(null);
   // Access dropdown data, error, and loading state from Redux
@@ -81,32 +84,49 @@ const ReportAccident = () => {
     }));
   };
   const handleSubmit = async () => {
-    if (
-      !formData.userId
-    ) {
-      Alert.alert('Error', 'Please fill in all required fields.');
-      return;
-    }
-
-    try {
-      const audioData = formData.audioUri
-        ? await readAudioFileAsBase64(formData.audioUri)
-        : null;
-      const imageData=formData.imageUri ? (await compressImage(formData.imageUri)):null;
-      formData.imageData=imageData;
-      formData.audioData=audioData;
-      const reportPayload=formData;
-      const response = await submitAccidentReport(reportPayload); 
-      if(response.id){
-        NavigationService.navigate('Confirmation');
-      }else{
-       Alert.alert('Error', `Error ${response.error}`);
+     try {
+        setIsSubmitting(true);
+          const audioData = formData.audioUri
+            ? await readAudioFileAsBase64(formData.audioUri)
+            : null;
+          const imageData=formData.imageUri ? (await compressImage(formData.imageUri)):null;
+          formData.imageData=imageData;
+          formData.audioData=audioData;
+          const reportPayload = {
+            ...formData,
+            latitude: formData.latitude || 0.1,
+            longitude: formData.longitude || 0.1,
+            status: 'PENDING',
+            createdAt: new Date().toISOString(),
+          };
+           const netInfo = await NetInfo.fetch();
+          if (!netInfo.isConnected  && !netInfo.isInternetReachable) {
+            // 🛑 No internet, save the report offline immediately
+            Alert.alert('No Internet', 'Saving report offline for later submission.');
+            await saveReportOffline(reportPayload);
+            NavigationService.navigate('Confirmation');
+            return;
+          } else {
+            try {
+              const response = await submitAccidentReport(reportPayload);
+              if (response.id) {
+                NavigationService.navigate('Confirmation');
+              } else {
+                Alert.alert('Error', `Submission failed: ${response.error}`);
+              }
+            } catch (error) {
+              console.error('Submission error:', error);
+              Alert.alert('Error', 'Failed to submit the report. Saving offline...');
+              await saveReportOffline(reportPayload);
+               NavigationService.navigate('Confirmation');
+            }
+          }
+        } catch (error) {
+          Alert.alert('Error', 'Submission failed');
+          console.error(error);
+        }finally {
+        setIsSubmitting(false);
       }
-      
-    } catch (error) {
-      Alert.alert('Error', 'Failed to submit the report. Please try again.');
-      console.error(error);
-    }
   };
 
   return (
@@ -222,7 +242,8 @@ const ReportAccident = () => {
       {/* Show the player if there is recorded audio */}
       {formData.audioUri && <AudioPlayer audioPath={formData.audioUri} />}
 
-        <CustomButton onPress={handleSubmit} title="SUBMIT" />
+         <CustomButton onPress={handleSubmit} title="SUBMIT"  disabled={isSubmitting}
+        loading={isSubmitting}/>
       </ScrollView>
     </View>
 

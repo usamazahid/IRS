@@ -81,6 +81,12 @@ const HomeScreen = () => {
                         title='DROP OFF' />)
                 }
                 {
+                    hasRequiredPermissions(permissions, ['investigation_form']) &&
+                    (<CustomButton
+                        onPress={() => NavigationService.navigate('InvestigationForm')}
+                        title='INVESTIGATION FORM' />)
+                }
+                {
                     hasRequiredPermissions(permissions, ['report_accident']) &&
                     (<CustomButton
                         onPress={() => NavigationService.navigate('ReportAccident')}

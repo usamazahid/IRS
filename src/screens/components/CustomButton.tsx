@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity ,ActivityIndicator} from 'react-native';
 // Import the icon library (e.g., Heroicons) 
 
 interface CustomButtonProps {
@@ -8,6 +8,8 @@ interface CustomButtonProps {
   activeOpacity?: number;
   variant?: 'default' | 'outlined'; // Variant prop
   IconComponent?: React.FC<{ size?: number; color?: string }>; // IconComponent prop
+  disabled?: boolean;
+  loading?: boolean;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
@@ -16,6 +18,8 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   activeOpacity = 0.7,
   variant = 'default', // Default to the purple background variant
   IconComponent, // Destructure the IconComponent prop
+   disabled=false, loading=false
+
 }) => {
   // Define className for each variant
   const buttonClassName =
@@ -30,17 +34,34 @@ const CustomButton: React.FC<CustomButtonProps> = ({
 
   return (
     <View className='pt-5 w-full'>
-      <TouchableOpacity
+       <TouchableOpacity
         className={buttonClassName}
         activeOpacity={activeOpacity}
         onPress={onPress}
+        disabled={disabled || loading}
         style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }} // Flexbox styling
       >
-        {/* Render the icon if provided */}
-        {IconComponent && <IconComponent size={24} color={variant === 'outlined' ? '#6A5ACD' : '#fff'} />}
-        <Text className={textClassName} style={{ marginLeft: IconComponent ? 8 : 0 }}> {/* Adjust margin */}
-          {title}
-        </Text>
+        {loading ? (
+          <ActivityIndicator 
+            color={variant === 'outlined' ? '#6A5ACD' : '#fff'} 
+            size="small"
+          />
+        ) : (
+          <>
+            {IconComponent && (
+              <IconComponent 
+                size={24} 
+                color={variant === 'outlined' ? '#6A5ACD' : '#fff'} 
+              />
+            )}
+            <Text 
+              className={textClassName} 
+              style={{ marginLeft: IconComponent ? 8 : 0 }}
+            >
+              {title}
+            </Text>
+          </>
+        )}
       </TouchableOpacity>
     </View>
   );

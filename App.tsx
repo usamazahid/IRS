@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import NavigationService, { navigationRef } from './src/context/NavigationService'; // Adjust if needed
+import  { navigationRef } from './src/context/NavigationService'; // Adjust if needed
 import { AuthGuard, AuthProvider } from './src/context/AuthContext'; // Adjust the path to the AuthContext if it's also in src
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignUpScreen';
@@ -21,10 +21,14 @@ import CreateUserScreen from './src/screens/CreateUserScreen';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SnackBarProvider } from './src/context/SnackBarContext';
 import AmbulanceStatsScreen from './src/screens/AmbulanceStatsScreen';
- 
+import InvestigationForm from './src/screens/InvestigationForm';
+import { setupNetworkListener } from './src/services/OfflineService';
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
+   useEffect(() => {
+    setupNetworkListener(); // Start listening for network changes
+  }, []);
   return (
     <AuthProvider>
        <PaperProvider>
@@ -53,6 +57,13 @@ const App: React.FC = () => {
             {(props) => (
               <AuthGuard {...props} requiredPermissions={['report_accident']}>
                 <ReportAccident />
+              </AuthGuard>
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="InvestigationForm">
+            {(props) => (
+              <AuthGuard {...props} requiredPermissions={['investigation_form']}>
+                <InvestigationForm />
               </AuthGuard>
             )}
           </Stack.Screen>

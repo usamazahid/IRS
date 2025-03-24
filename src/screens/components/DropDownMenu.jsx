@@ -2,16 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { SafeAreaView, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { SelectCountry } from 'react-native-element-dropdown';
 
-const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placeholder, onItemSelect,dropDownData }) => {
+const GenericDropdown = ({ dataUrl, valueField, labelField,value: propValue, imageField, placeholder, onItemSelect,dropDownData, disabled = false }) => {
   const [data, setData] = useState(dropDownData || []);
   const [selectedValue, setSelectedValue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Handle initial value and prop updates
+  useEffect(() => {
+    if (propValue !== undefined && data.length > 0) {
+      const exists = data.some(item => item[valueField] === propValue);
+      if (exists) setSelectedValue(propValue);
+    }
+  }, [propValue, data, valueField]);
 
  useEffect(() => {
   if (dropDownData) {
-    console.log("Setting given data");
-    setData(dropDownData);
+     const clonedData = dropDownData.map(item => ({ ...item }));
+    setData(clonedData);
     setLoading(false); // Immediately stop loading as data is provided
   }else if(dataUrl){
 
@@ -82,6 +89,7 @@ const GenericDropdown = ({ dataUrl, valueField, labelField, imageField, placehol
         placeholder={placeholder}
         searchPlaceholder="Search..."
         onChange={handleSelect}
+         disable={disabled}
       />
     </SafeAreaView>
   );
