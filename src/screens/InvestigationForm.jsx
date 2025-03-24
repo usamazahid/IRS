@@ -27,6 +27,7 @@ import DynamicFormSection from './components/DynamicFormSection';
 import FollowUpActions from './components/FollowUpActions';
 import NetInfo from '@react-native-community/netinfo';
 import { saveReportOffline } from '../services/OfflineService';
+import MultipleCameraComponent from './components/MulitpleCameraComponent';
 const InvestigationForm = () => {
   const { user, role, permissions } = useSelector((state) => state.auth);
   const ACCIDENT_TYPES_URL = `${API_BASE_URL}/irs/getAccidentTypes`;
@@ -53,7 +54,12 @@ const InvestigationForm = () => {
 
   // Add state for submission status
 const [isSubmitting, setIsSubmitting] = useState(false);
+const [capturedImages, setCapturedImages] = useState([]);
 
+  // Callback to receive images from CameraComponent
+  const handleImageCapture = (uris) => {
+    setCapturedImages(uris);
+  };
   useEffect(() => {
     // If no data in Redux, fetch from the API
     if (accidentTypes.length === 0 || weatherConditions.length === 0) { 
@@ -135,7 +141,8 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Witnesses
     witnesses: [],
-    vehicleFitnessDetails:[]
+    vehicleFitnessDetails:[],
+    imageDTOs:[]
   });
 
   const genderData = [
@@ -152,7 +159,31 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     }));
   };
 
-
+  const fillImageDto = async (capturedData) => {
+    let imageDTOs = [];
+    console.log(capturedData);
+    if (capturedData.length > 0) {
+      const results = await Promise.allSettled(
+        capturedData.map(uri => compressImage(uri))
+      );
+      imageDTOs = results.map(result => {
+        if (result.status === 'fulfilled') {
+          return {
+            imageDate: new Date().toISOString(), // Add current date-time
+            imageData: result.value             // Compressed image data from compressImage
+          };
+        } else {
+          // Optionally, return an error field for failed compressions
+          return {
+            imageDate: new Date().toISOString(),
+            imageData: null,
+            error: result.reason
+          };
+        }
+      });
+    }
+    return imageDTOs;
+  };
   const inputHandling = (fieldName, data) => {
     console.log(data);
     setFormData((prev) => ({
@@ -173,6 +204,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
       const imageData=formData.imageUri ? (await compressImage(formData.imageUri)):null;
       formData.imageData=imageData;
       formData.audioData=audioData;
+      formData.imageDTOs =await fillImageDto(capturedImages);
       const reportPayload = {
         ...formData,
         latitude: formData.latitude || 0.1,
@@ -181,7 +213,6 @@ const [isSubmitting, setIsSubmitting] = useState(false);
         createdAt: new Date().toISOString()
       };
        const netInfo = await NetInfo.fetch();
-      
       if (!netInfo.isConnected  && !netInfo.isInternetReachable) {
         // 🛑 No internet, save the report offline immediately
         Alert.alert('No Internet', 'Saving report offline for later submission.');
@@ -428,10 +459,22 @@ const [isSubmitting, setIsSubmitting] = useState(false);
             title="Add Vehicles Involved"
             items={formData.vehicles}
             fields={[
-              { label: 'Registration No', key: 'registration' },
+              { label: 'Registration No', key: 'registrationNo' },
               { label: 'Select Vehicle Type', key: 'type', type: 'dropdown', data: vehicleInvolved,labelField:'label',valueField: 'label' },
               { label: 'Select Condition', key: 'condition', type: 'dropdown', 
-                data: [{id:1,label:'Minor'}, {id:2,label:'Major'}, {id:3,label:'Total Loss'}],labelField:'label',valueField: 'label' }
+                data: [{id:1,label:'Minor'}, {id:2,label:'Major'}, {id:3,label:'Total Loss'}],labelField:'label',valueField: 'label' },
+                {
+                  label: 'Select Vehicle Fitness Certificate Status',
+                  key: 'fitnessCertificateStatus',
+                  type: 'dropdown',
+                  data: [
+                    { id: 1, label: 'Valid' },
+                    { id: 2, label: 'Expired' },
+                    { id: 3, label: 'Not Available' }
+                  ],
+                  labelField: 'label'
+                  ,valueField: 'label'
+                }
             ]}
             onAdd={() => addArrayEntry('vehicles', { registration: '', type: '', condition: '' })}
             onUpdate={(index, key, value) => handleArrayUpdate('vehicles', index, key, value)}
@@ -543,9 +586,13 @@ const [isSubmitting, setIsSubmitting] = useState(false);
             />
           </View>
 
-      <CameraComponent onCapture={(uri) => inputHandling('imageUri', uri)} editable={true}  /> 
+     {/* <CameraComponent onCapture={(uri) => inputHandling('imageUri', uri)} editable={true}  /> */}
       {/* <CameraComponent initialUri={savedUri} editable={false} /> */}
-
+      <MultipleCameraComponent 
+        onCapture={handleImageCapture} 
+        editable={true} 
+        initialUris={[]} 
+      />
         {/* Recorder with a 1-minute time limit */}
       <AudioRecorder expiryTime={60000} onRecordingComplete={(path)=>inputHandling('audioUri', path)} />
 

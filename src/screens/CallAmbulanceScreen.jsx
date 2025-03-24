@@ -23,11 +23,11 @@ const CallAmbulanceScreen = () => {
 
   useEffect(() => {
     // If no data in Redux, fetch from the API
-    if (!ambulanceServiceData || !frequentlyUsedServices) { 
+    if (!ambulanceServiceData || ambulanceServiceData.length === 0) { 
         dispatch(origanizationData('getOrganizations'))
                   .unwrap().then(() => {});
     }
-  }, [  ambulanceServiceData,frequentlyUsedServices,dispatch]);
+  }, [  ambulanceServiceData,dispatch]);
 
   if (loading) {
     // Show a loading indicator while authentication is in progress
