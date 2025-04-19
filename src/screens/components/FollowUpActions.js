@@ -16,8 +16,7 @@ const FollowUpActions = ({onChange,dropDownData}) => {
 
   const handleCaseReferral = selected => {
     // Use Object.assign to create new object reference
-    const selectedValue = selected ? {...selected} : null;
-    setCaseReferredTo(selectedValue?.unit || '');
+    setCaseReferredTo(selected?.id || '');
     handleUpdate();
   };
 
@@ -93,7 +92,8 @@ const FollowUpActions = ({onChange,dropDownData}) => {
       <View style={styles.fieldGroup}>
         <Text style={styles.label}>Case Referred To:</Text>
         <GenericDropDownMenu
-          data={safeDropDownData} // Use copied data
+          className="bg-slate-200"
+          data={safeDropDownData}
           valueField="id"
           labelField="unit"
           placeholder="Select Case Referred"

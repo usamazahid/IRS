@@ -16,6 +16,7 @@ interface DropdownState {
   roadSignages: Object[] | null;
   caseReferredTo: Object[] | null;
   faultAssessments: Object[] | null;
+  genderTypes: Object[] | null;
   error: string | null;
   loading: boolean;
 }
@@ -34,6 +35,7 @@ const initialState: DropdownState = {
   faultAssessments: [],
   ambulanceServiceData: [],
   frequentlyUsedServices: [],
+  genderTypes: [],
   error: null,
   loading: false,
 };
@@ -86,6 +88,7 @@ export const fetchAllLovs = createAsyncThunk(
         roadSignages: lovs.roadSignages,
         caseReferredTo: lovs.caseReferredTo,
         faultAssessments: lovs.faultAssessments,
+        genderTypes: lovs.genderTypes,
       };
     } catch (error: any) {
       console.error('Error fetching LOV data:', error);
@@ -171,6 +174,7 @@ const dropdownSlice = createSlice({
           state.roadSignages = action.payload.roadSignages;
           state.caseReferredTo = action.payload.caseReferredTo;
           state.faultAssessments = action.payload.faultAssessments;
+          state.genderTypes = action.payload.genderTypes;
         })
         .addCase(fetchAllLovs.rejected, (state, action) => {
           state.loading = false;

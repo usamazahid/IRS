@@ -86,7 +86,7 @@ const [capturedImages, setCapturedImages] = useState([]);
 
     const [formData, setFormData] = useState({
     // Basic Info
-    gender: 'male',
+    gender: null,
     latitude: null,
     longitude: null,
     accidentTypeId: '',
@@ -221,6 +221,7 @@ const [capturedImages, setCapturedImages] = useState([]);
         return;
       } else {
         try {
+          console.log('Submitting report:', reportPayload);
           const response = await submitAccidentReport(reportPayload);
           if (response.id) {
             NavigationService.navigate('Confirmation');
@@ -323,7 +324,7 @@ const [capturedImages, setCapturedImages] = useState([]);
           placeholder="Select Gender" // Pass the callback function
           onItemSelect={(value) => {
             console.log(value);
-            inputHandling('gender', value.value)}}
+            inputHandling('gender', value.id)}}
         />
        
          {/* Environmental Factors */}
@@ -345,7 +346,7 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="cause"
               imageField="image"
               placeholder="Select Apparent Cause"
-              onItemSelect={(item) => setFormData(prev => ({ ...prev, cause: item.cause }))}
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, cause: item.id }))}
             />
             
             <GenericDropDownMenu className="bg-slate-200"
@@ -354,7 +355,7 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="condition"
               imageField="image"
               placeholder="Select Weather"
-              onItemSelect={(item) => setFormData(prev => ({ ...prev, weatherCondition: item.condition }))}
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, weatherCondition: item.id }))}
             />
 
             <GenericDropDownMenu className="bg-slate-200"
@@ -363,7 +364,7 @@ const [capturedImages, setCapturedImages] = useState([]);
               valueField="id"
               labelField="level"
               imageField="image"
-              onItemSelect={(item) => setFormData(prev => ({ ...prev, visibility: item.level }))}
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, visibility: item.id }))}
             />
             <GenericDropDownMenu className="bg-slate-200"
               data={roadSurfaceConditions}
@@ -371,7 +372,7 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="condition"
               imageField="image"
               placeholder="Select Road Surface Conditions"
-              onItemSelect={(item) => setFormData(prev => ({ ...prev, roadSurfaceCondition: item.condition }))}
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, roadSurfaceCondition: item.id }))}
             />
             <GenericDropDownMenu className="bg-slate-200"
               data={roadTypes}
@@ -379,7 +380,7 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="type"
               imageField="image"
               placeholder="Select Road Type"
-              onItemSelect={(item) => setFormData(prev => ({ ...prev, roadType: item.type }))}
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, roadType: item.id }))}
             />
              <GenericDropDownMenu className="bg-slate-200"
               data={roadSignages}
@@ -387,7 +388,7 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="status"
               imageField="image"
               placeholder="Select Road Markings / Signage"
-              onItemSelect={(item) => setFormData(prev => ({ ...prev, roadMarkings: item.status }))}
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, roadMarkings: item.id }))}
             />
         {/* // VEHICLE FITNESS & DOCUMENT VERIFICATION */}
            <Text className="text-xl font-bold my-2 text-gray-800">VEHICLE FITNESS & DOCUMENT VERIFICATION</Text>
@@ -460,7 +461,7 @@ const [capturedImages, setCapturedImages] = useState([]);
             items={formData.vehicles}
             fields={[
               { label: 'Registration No', key: 'registrationNo' },
-              { label: 'Select Vehicle Type', key: 'type', type: 'dropdown', data: vehicleInvolved,labelField:'label',valueField: 'label' },
+              { label: 'Select Vehicle Type', key: 'type', type: 'dropdown', data: vehicleInvolved,labelField:'label',valueField: 'id' },
               { label: 'Select Condition', key: 'condition', type: 'dropdown', 
                 data: [{id:1,label:'Minor'}, {id:2,label:'Major'}, {id:3,label:'Total Loss'}],labelField:'label',valueField: 'label' },
                 {
@@ -542,7 +543,7 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="fault"
               imageField="image"
               placeholder="Select Preliminary Fault Assessment"
-              onItemSelect={(item) => setFormData(prev => ({ ...prev, preliminaryFault: item.fault }))}
+              onItemSelect={(item) => setFormData(prev => ({ ...prev, preliminaryFault: item.id }))}
             /> 
 
               <TextBox label="Observations/Notes"

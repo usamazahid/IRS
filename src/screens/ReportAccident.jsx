@@ -9,7 +9,7 @@ import TextBox from './components/TextBox';
 import NavigationService from '../context/NavigationService';
 import CustomButton from './components/CustomButton';
 import { StyleSheet, Alert } from 'react-native';
-import SimpleDropDownMenu from './components/SimpleDropDownMenu';
+import GenericDropDownMenu from './components/GenericDropDownMenu';
 import AudioRecorder from './components/AudioRecorder';
 import AudioPlayer from './components/AudioPlayer';
 import {API_BASE_URL} from '@env';
@@ -20,7 +20,7 @@ import { readAudioFileAsBase64 } from '../utils/AudioUtils';
 import { submitAccidentReport } from '../services/accidentService';
 import { compressImage } from '../utils/ImageUtils';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchReportDropdowns } from '../redux/slices/dropdownSlice'; // Import the action
+import { fetchAllLovs } from '../redux/slices/dropdownSlice'; // Import the action
 
 import NetInfo from '@react-native-community/netinfo';
 import { saveReportOffline } from '../services/OfflineService';
@@ -37,19 +37,19 @@ const [isSubmitting, setIsSubmitting] = useState(false);
   // Access dropdown data, error, and loading state from Redux
   const {accidentTypes,
   patientVictim,
-  vehicleInvolved} = useSelector((state) => state.dropdown);
+  vehicleInvolved,apparentCauses,genderTypes} = useSelector((state) => state.dropdown);
 
   useEffect(() => {
     // If no data in Redux, fetch from the API
-    if (!accidentTypes || !patientVictim || !vehicleInvolved) { 
+    if (!accidentTypes || accidentTypes.length === 0) { 
       console.log('data caling')
-        dispatch(fetchReportDropdowns())
+        dispatch(fetchAllLovs())
                   .unwrap().then(() => {});
     }
-  }, [  patientVictim,accidentTypes,vehicleInvolved,dispatch]);
+  }, [  accidentTypes,dispatch]);
 
   const [formData, setFormData] = useState({
-    gender: 'male',
+    gender: null,
     latitude: null,
     longitude: null,
     accidentTypeId: '',
@@ -164,7 +164,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
             {'ACCIDENT TYPE'}
           </Text>
 
-        <SimpleDropDownMenu className="bg-slate-200"
+        <GenericDropDownMenu className="bg-slate-200"
             dataUrl={ACCIDENT_TYPES_URL}
             valueField="id"
             labelField="label"
@@ -177,7 +177,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
            <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
             {'VECHILE INVOLVED'}
           </Text>
-        <SimpleDropDownMenu className="bg-slate-200"
+        <GenericDropDownMenu className="bg-slate-200"
             dataUrl={VECHILE_INVOLVED_URL}
             valueField="id"
             labelField="label"
@@ -189,7 +189,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
         <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>
             {'PATIENT VICTIM'}
         </Text>
-        <SimpleDropDownMenu className="bg-slate-200"
+        <GenericDropDownMenu className="bg-slate-200"
             dataUrl={PATIENT_VICTIM_URL}
             valueField="id"
             labelField="label"
@@ -199,19 +199,23 @@ const [isSubmitting, setIsSubmitting] = useState(false);
             onItemSelect={(value) => { 
               inputHandling('patientVictimId', value.id)}}
           />
-        <SimpleDropDownMenu className="bg-slate-200"
+        <GenericDropDownMenu className="bg-slate-200"
           // dataUrl={PATIENT_VICTIM_URL}
-          data={genderData}
+          data={genderTypes}
           valueField="id"
           labelField="label"
           placeholder="Select Gender" // Pass the callback function
           onItemSelect={(value) => {
-            console.log(value);
-            inputHandling('gender', value.value)}}
+            inputHandling('gender', value.id)}}
         />
-        <TextBox
-          label="Cause of Accident"
-          onChangeText={(text) => inputHandling('cause', text)}
+
+        <GenericDropDownMenu className="bg-slate-200"
+          data={apparentCauses}
+          valueField="id"
+          labelField="cause"
+          imageField="image"
+          placeholder="Select Apparent Cause"
+          onItemSelect={(item) => setFormData(prev => ({ ...prev, cause: item.id }))}
         />
         <TextBox
           label="Total Number of Affected"
