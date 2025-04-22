@@ -49,7 +49,8 @@ const InvestigationForm = () => {
     roadTypes,
     roadSignages,
     faultAssessments,
-    caseReferredTo
+    caseReferredTo,
+    genderTypes
   } = useSelector((state) => state.dropdown);
 
   // Add state for submission status
@@ -318,7 +319,7 @@ const [capturedImages, setCapturedImages] = useState([]);
 
 
         <GenericDropDownMenu className="bg-slate-200"
-          data={genderData}
+          data={genderTypes}
           valueField="id"
           labelField="label"
           placeholder="Select Gender" // Pass the callback function
