@@ -23,6 +23,7 @@ import { SnackBarProvider } from './src/context/SnackBarContext';
 import AmbulanceStatsScreen from './src/screens/AmbulanceStatsScreen';
 import InvestigationForm from './src/screens/InvestigationForm';
 import { setupNetworkListener } from './src/services/OfflineService';
+import OfflineReportsScreen from './src/screens/OfflineReportsScreen';
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
@@ -123,6 +124,13 @@ const App: React.FC = () => {
             {(props) => (
               <AuthGuard {...props} requiredPermissions={['search_users']}>
                 <SearchUserScreen />
+              </AuthGuard>
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="OfflineReports">
+            {(props) => (
+              <AuthGuard {...props} requiredPermissions={['view_offline_reports']}>
+                <OfflineReportsScreen />
               </AuthGuard>
             )}
           </Stack.Screen>

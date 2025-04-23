@@ -86,6 +86,9 @@ const [capturedImages, setCapturedImages] = useState([]);
     };
 
     const [formData, setFormData] = useState({
+    //for offline reports
+    accidentTypeLabel: '',
+    accidentTypeDescription: '',
     // Basic Info
     gender: null,
     latitude: null,
@@ -338,7 +341,7 @@ const [capturedImages, setCapturedImages] = useState([]);
               imageField="image"
               placeholder="Select Accident Type" // Pass the callback function
               data={accidentTypes}
-              onItemSelect={(value) => inputHandling('accidentTypeId', value.id)}
+              onItemSelect={(value) => {inputHandling('accidentTypeId', value.id);inputHandling('accidentTypeLabel', value.label);inputHandling('accidentTypeDescription', value.description)}}
             />
 
              <GenericDropDownMenu className="bg-slate-200"

@@ -7,6 +7,7 @@ export const getDropDownData = async (urlPath: String) => {
   try {
     const dataUrl = `${apiURL}/irs/${urlPath}`;
     // Send GET request to the API
+    console.log('🛠️ API_BASE_URL →', apiURL);
     const response = await axios.get(dataUrl, {
       headers: {
         Accept: 'application/json',

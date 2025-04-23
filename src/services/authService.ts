@@ -9,6 +9,7 @@ export const fetchUserByMobile = async (userId: string) => {
     console.log('Fetching user by mobile number...');
     const path=`${apiURL}/irs/getUserData`;
     //  const path=`${apiURL}/users.json`
+    console.log('🛠️ API_BASE_URL →', apiURL);
     const response = await axios.post(path, {
       userId:  userId  // Ensure this key matches your backend requirements
     }, {

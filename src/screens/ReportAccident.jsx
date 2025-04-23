@@ -49,6 +49,8 @@ const [isSubmitting, setIsSubmitting] = useState(false);
   }, [  accidentTypes,dispatch]);
 
   const [formData, setFormData] = useState({
+    accidentTypeLabel: '',
+    accidentTypeDescription: '',
     gender: null,
     latitude: null,
     longitude: null,
@@ -171,7 +173,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
             imageField="image"
             placeholder="Select Accident Type" // Pass the callback function
             data={accidentTypes}
-            onItemSelect={(value) => inputHandling('accidentTypeId', value.id)}
+            onItemSelect={(value) => {inputHandling('accidentTypeId', value.id);inputHandling('accidentTypeLabel', value.label);inputHandling('accidentTypeDescription', value.description)}}
           />
 
            <Text className={'mt-2 left-3 bg-white text-sm font-semibold text-gray-400 z-10'}>

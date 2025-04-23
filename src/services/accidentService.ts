@@ -6,6 +6,7 @@ const apiURL = API_BASE_URL;
 export const submitAccidentReport = async (reportData: any) => {
   try {
     const path = `${apiURL}/irs/saveReportData`;
+    console.log('🛠️ API_BASE_URL →', apiURL);
     const response = await axios.post(path, reportData, {
       headers: {
         Accept: 'application/json',

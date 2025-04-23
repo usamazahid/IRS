@@ -1,35 +1,224 @@
-// src/screens/ConfirmationScreen.jsx
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  Modal,
+  ScrollView,
+  Alert,
+  StyleSheet,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeftIcon } from 'react-native-heroicons/solid';
 import CustomButton from './components/CustomButton';
-import NavigationService from '../context/NavigationService';
 import TopBar from './components/TopBarComponent';
-const OfflineReportsScreen = ( ) => {
-  return (
-    <SafeAreaView className="flex-1 bg-slate-200 bg-white">
-    <View className="flex-row justify-start p-2">
-          <TouchableOpacity onPress={() => NavigationService.goBack()}>
-            <ArrowLeftIcon size="20" color="black" />
-          </TouchableOpacity>
-        </View>
-        <TopBar/>
-    
-        <View className="flex-1 justify-center p-6 bg-white">
-        <Text className="text-center text-gray-800 text-2xl mb-4">
-          Offline Reports
-        </Text>
+import NavigationService from '../context/NavigationService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { submitAccidentReport } from '../services/accidentService';
 
-      <CustomButton
-        onPress={() => NavigationService.navigate('Home')}
-        title="Back"
-        color="transparent"
-        textColor="blue"
-      />
+const OFFLINE_QUEUE_KEY = '@offline_reports';
+const MAX_RETRIES = 3;
+
+const OfflineReportsScreen = () => {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+
+  const loadReports = async () => {
+    setLoading(true);
+    try {
+      const stored = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
+      const list = stored ? JSON.parse(stored) : [];
+      setReports(list);
+    } catch (error) {
+      console.error('Error loading offline reports:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  const deleteReport = async (report) => {
+    const filtered = reports.filter(r => r.createdAt !== report.createdAt);
+    await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(filtered));
+    setReports(filtered);
+  };
+
+  const resubmitReport = async (report) => {
+    if (report.retries >= MAX_RETRIES) {
+      Alert.alert('Cannot Resubmit', 'Max retries reached for this report.');
+      return;
+    }
+    try {
+      const response = await submitAccidentReport(report);
+      if (response.id) {
+        await deleteReport(report);
+        Alert.alert('Submitted', 'Report submitted successfully.');
+      } else {
+        throw new Error('No ID returned');
+      }
+    } catch (error) {
+      const updated = reports.map(r =>
+        r.createdAt === report.createdAt
+          ? { ...r, retries: (r.retries || 0) + 1 }
+          : r
+      );
+      await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(updated));
+      setReports(updated);
+      Alert.alert('Retry Failed', 'Will retry later.');
+    }
+  };
+
+  const viewReport = (report) => {
+    setSelectedReport(report);
+    setModalVisible(true);
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      <Text style={styles.title}>{item.accidentTypeLabel}</Text>
+      <Text style={styles.subtitle}>Created: {new Date(item.createdAt).toLocaleString()}</Text>
+      <View style={styles.actions}>
+        <View style={styles.actionButton}>
+          <CustomButton
+            title="View"
+            onPress={() => viewReport(item)}
+            color="transparent"
+            textColor="blue"
+          />
+        </View>
+        <View style={styles.actionButton}>
+          <CustomButton
+            title="Resubmit"
+            onPress={() => resubmitReport(item)}
+            color="transparent"
+            textColor="green"
+          />
+        </View>
+        <View style={styles.actionButton}>
+          <CustomButton
+            title="Delete"
+            onPress={() => deleteReport(item)}
+            color="transparent"
+            textColor="red"
+          />
+        </View>
+      </View>
     </View>
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.loading}>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => NavigationService.goBack()}>
+          <ArrowLeftIcon size={20} color="black" />
+        </TouchableOpacity>
+      </View>
+      <TopBar />
+      <Text style={styles.screenTitle}>Offline Reports</Text>
+      {reports.length === 0 ? (
+        <Text style={styles.empty}>No pending offline reports</Text>
+      ) : (
+        <FlatList
+          data={reports}
+          keyExtractor={(item) => item.createdAt}
+          renderItem={renderItem}
+          contentContainerStyle={{ padding: 16 }}
+        />
+      )}
+
+      {selectedReport && (
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ScrollView>
+                <Text style={styles.modalTitle}>Report Details</Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.modalLabel}>Type:</Text> {selectedReport.accidentTypeLabel}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.modalLabel}>Desc:</Text> {selectedReport.accidentTypeDescription}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.modalLabel}>Location:</Text> {selectedReport.nearestLandMark}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.modalLabel}>Retries:</Text> {selectedReport.retries}
+                </Text>
+                <Text style={styles.modalText}>
+                  <Text style={styles.modalLabel}>Created:</Text> {new Date(selectedReport.createdAt).toLocaleString()}
+                </Text>
+              </ScrollView>
+              <CustomButton title="Close" onPress={() => setModalVisible(false)} color="blue" textColor="white" />
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F1F5F9' },
+  header: { flexDirection: 'row', padding: 8 },
+  screenTitle: { textAlign: 'center', fontSize: 24, marginVertical: 12, color: '#1E293B' },
+  loading: { textAlign: 'center', marginTop: 20, color: 'gray' },
+  empty: { textAlign: 'center', marginTop: 20, color: 'gray' },
+  card: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  title: { fontSize: 18, fontWeight: 'bold', color: '#0F172A' },
+  subtitle: { fontSize: 12, color: '#61748B', marginBottom: 8 },
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    marginHorizontal: -4,
+  },
+  actionButton: {
+    width: '30%',
+    margin: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    width: '80%',
+    padding: 16,
+  },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 12, color: '#0F172A' },
+  modalText: { fontSize: 14, marginBottom: 8, color: '#334155' },
+  modalLabel: { fontWeight: 'bold', color: '#0F172A' },
+});
 
 export default OfflineReportsScreen;

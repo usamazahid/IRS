@@ -12,7 +12,11 @@ export const saveReportOffline = async reportData => {
     const reports = existingReports ? JSON.parse(existingReports) : [];
 
     // Add initial retries count
-    reports.push({...reportData, retries: 0});
+    reports.push({
+      ...reportData,
+      retries: 0,
+      syncStatus: 'pending',
+    });
     await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(reports));
     console.log('Report saved for offline submission');
   } catch (error) {
