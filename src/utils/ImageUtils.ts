@@ -63,3 +63,39 @@ export const getFileSize = async (filePath: string): Promise<number> => {
     return 0;
   }
 };
+
+interface ImageDTO {
+  imageDate: string;
+  imageData: string | null;
+  error?: unknown;
+}
+export const fillImageDto = async (capturedData: string[]): Promise<ImageDTO[]> => {
+  let imageDTOs: ImageDTO[] = [];
+  
+  if (capturedData.length > 0) {
+    const results = await Promise.allSettled(
+      capturedData.map(uri => compressImage(uri))
+    );
+
+    imageDTOs = results.map<ImageDTO>((result) => {
+      const baseImageDto = {
+        imageDate: new Date().toISOString(),
+        imageData: null
+      };
+
+      if (result.status === 'fulfilled') {
+        return {
+          ...baseImageDto,
+          imageData: result.value
+        };
+      } else {
+        return {
+          ...baseImageDto,
+          error: result.reason
+        };
+      }
+    });
+  }
+  
+  return imageDTOs;
+};

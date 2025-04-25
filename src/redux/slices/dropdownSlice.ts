@@ -17,6 +17,11 @@ interface DropdownState {
   caseReferredTo: Object[] | null;
   faultAssessments: Object[] | null;
   genderTypes: Object[] | null;
+  vehicleConditions: Object[] | null;
+  fitnessCertificateStatuses: Object[] | null;
+  casualtiesStatuses: Object[] | null;injurySeverities: Object[] | null;
+  roadTaxStatuses: Object[] | null;
+  insuranceStatuses: Object[] | null;
   error: string | null;
   loading: boolean;
 }
@@ -36,6 +41,12 @@ const initialState: DropdownState = {
   ambulanceServiceData: [],
   frequentlyUsedServices: [],
   genderTypes: [],
+  vehicleConditions: [],
+  fitnessCertificateStatuses: [],
+  casualtiesStatuses: [],
+  injurySeverities: [],
+  roadTaxStatuses: [],
+  insuranceStatuses: [],
   error: null,
   loading: false,
 };
@@ -89,6 +100,12 @@ export const fetchAllLovs = createAsyncThunk(
         caseReferredTo: lovs.caseReferredTo,
         faultAssessments: lovs.faultAssessments,
         genderTypes: lovs.genderTypes,
+        vehicleConditions: lovs.vehicleConditions,
+        fitnessCertificateStatuses: lovs.fitnessCertificateStatuses,
+        casualtiesStatuses: lovs.casualtiesStatuses,
+        injurySeverities:   lovs.injurySeverities,
+        roadTaxStatuses: lovs.roadTaxStatuses,
+        insuranceStatuses: lovs.insuranceStatuses,
       };
     } catch (error: any) {
       console.error('Error fetching LOV data:', error);
@@ -124,6 +141,28 @@ const dropdownSlice = createSlice({
   reducers: {
     resetError(state) {
       state.error = null; // Reset the error state
+    },
+    resetLovs(state) {
+      state.accidentTypes = [];
+      state.patientVictim = [];
+      state.vehicleInvolved = [];
+      state.apparentCauses = [];
+      state.weatherConditions = [];
+      state.visibilityLevels = [];
+      state.roadSurfaceConditions = [];
+      state.roadTypes = [];
+      state.roadSignages = [];
+      state.caseReferredTo = [];
+      state.faultAssessments = [];
+      state.genderTypes = [];
+      state.vehicleConditions = [];
+      state.fitnessCertificateStatuses = [];
+      state.casualtiesStatuses = [];
+      state.injurySeverities = [];
+      state.roadTaxStatuses = [];
+      state.insuranceStatuses = [];
+      state.error = null;
+      state.loading = false;
     },
   },
   extraReducers: builder => {
@@ -175,6 +214,12 @@ const dropdownSlice = createSlice({
           state.caseReferredTo = action.payload.caseReferredTo;
           state.faultAssessments = action.payload.faultAssessments;
           state.genderTypes = action.payload.genderTypes;
+          state.vehicleConditions = action.payload.vehicleConditions;
+          state.fitnessCertificateStatuses = action.payload.fitnessCertificateStatuses;
+          state.casualtiesStatuses = action.payload.casualtiesStatuses;
+          state.injurySeverities = action.payload.injurySeverities;
+          state.roadTaxStatuses = action.payload.roadTaxStatuses;
+          state.insuranceStatuses = action.payload.insuranceStatuses;
         })
         .addCase(fetchAllLovs.rejected, (state, action) => {
           state.loading = false;
@@ -183,5 +228,5 @@ const dropdownSlice = createSlice({
   },
 });
 
-export const {resetError} = dropdownSlice.actions;
+export const {resetError,resetLovs} = dropdownSlice.actions;
 export default dropdownSlice.reducer;

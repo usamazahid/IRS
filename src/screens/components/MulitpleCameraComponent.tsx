@@ -21,7 +21,7 @@ interface CameraComponentProps {
   maxPhotos:number;                   // If false, user cannot add/remove images
 }
 
-const MultipleCameraComponent: React.FC<CameraComponentProps> = ({ onCapture, initialUris = [], editable,maxPhotos = 5 }) => {
+const MultipleCameraComponent: React.FC<CameraComponentProps> = ({ onCapture, initialUris = [], editable, maxPhotos = 5 }) => {
   const [images, setImages] = useState<string[]>(initialUris);
 
   useEffect(() => {
@@ -101,14 +101,15 @@ const MultipleCameraComponent: React.FC<CameraComponentProps> = ({ onCapture, in
           ))}
         </ScrollView>
       )}
-      {editable && (
+      {
         <CustomButton
           onPress={openCamera}
           title="Take Photo"
           IconComponent={CameraIcon}
           variant="outlined"
+          disabled={!editable}
         />
-      )}
+      }
     </View>
   );
 };
@@ -140,6 +141,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
   },
+  disabledButton: { opacity: 0.5 }, // visually indicate disabled
 });
 
 export default MultipleCameraComponent;

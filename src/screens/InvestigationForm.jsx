@@ -18,7 +18,7 @@ import MapComponent from './components/MapComponent';
 import CameraComponent from './components/CameraComponent';
 import { readAudioFileAsBase64 } from '../utils/AudioUtils';
 import { submitAccidentReport } from '../services/accidentService';
-import { compressImage } from '../utils/ImageUtils';
+import { compressImage,fillImageDto } from '../utils/ImageUtils';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAllLovs } from '../redux/slices/dropdownSlice'; // Import the action
 import GenericDropDownMenu from './components/GenericDropDownMenu';
@@ -28,67 +28,40 @@ import FollowUpActions from './components/FollowUpActions';
 import NetInfo from '@react-native-community/netinfo';
 import { saveReportOffline } from '../services/OfflineService';
 import MultipleCameraComponent from './components/MulitpleCameraComponent';
-const InvestigationForm = () => {
-  const { user, role, permissions } = useSelector((state) => state.auth);
+import { hasRequiredPermissions } from '../utils/permissionUtils';
+const InvestigationForm = ({ route }) => {
+  const { user,permissions } = useSelector(state => state.auth);
+  const dispatch = useDispatch();
+
+ // navigation params for view-mode
+  const { initialData = null, editable: editableFlag = true } = route.params || {};
+  const editable = Boolean(editableFlag);
+
+  // LOV URLs
   const ACCIDENT_TYPES_URL = `${API_BASE_URL}/irs/getAccidentTypes`;
   const PATIENT_VICTIM_URL = `${API_BASE_URL}/irs/getPatientVictim`;
   const VECHILE_INVOLVED_URL = `${API_BASE_URL}/irs/getVehicleInvolved`;
   // const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/accident_types.json';
 
-  const dispatch = useDispatch();
-  const [mapLocation,setMapLocation]=useState(null);
+  
   // Access dropdown data, error, and loading state from Redux
+  // dropdown state from Redux
+  const dropdown = useSelector(state => state.dropdown);
   const {
-    accidentTypes,
-    vehicleInvolved,
-    patientVictim,
-    apparentCauses,
-    weatherConditions,
-    visibilityLevels,
-    roadSurfaceConditions,
-    roadTypes,
-    roadSignages,
-    faultAssessments,
-    caseReferredTo,
-    genderTypes
-  } = useSelector((state) => state.dropdown);
-
-  // Add state for submission status
-const [isSubmitting, setIsSubmitting] = useState(false);
-const [capturedImages, setCapturedImages] = useState([]);
-
-  // Callback to receive images from CameraComponent
-  const handleImageCapture = (uris) => {
-    setCapturedImages(uris);
-  };
-  useEffect(() => {
-    // If no data in Redux, fetch from the API
-    if (accidentTypes.length === 0 || weatherConditions.length === 0) { 
-      console.log('data caling')
-        dispatch(fetchAllLovs())
-                  .unwrap().then(() => {});
-    }
-  }, [  accidentTypes,weatherConditions,dispatch]);
-
-      // Handler for dynamic arrays
-    const handleArrayUpdate = (field, index, key, value) => {
-      const updatedArray = [...formData[field]];
-      updatedArray[index][key] = value;
-      setFormData(prev => ({ ...prev, [field]: updatedArray }));
-    };
-
-    // Add new entry to array
-    const addArrayEntry = (field, template) => {
-      setFormData(prev => ({ 
-        ...prev, 
-        [field]: [...prev[field], template] 
-      }));
-    };
+    accidentTypes, vehicleInvolved, patientVictim,
+    apparentCauses, weatherConditions, visibilityLevels,
+    roadSurfaceConditions, roadTypes, roadSignages,
+    faultAssessments, caseReferredTo, genderTypes,
+    vehicleConditions,fitnessCertificateStatuses,casualtiesStatuses,
+    injurySeverities,roadTaxStatuses,insuranceStatuses
+  } = dropdown;
 
     const [formData, setFormData] = useState({
     //for offline reports
     accidentTypeLabel: '',
     accidentTypeDescription: '',
+    viewOfflineReport: hasRequiredPermissions(permissions, ['view_offline_reports']),
+    useCase:'InvestigationForm',
     // Basic Info
     gender: null,
     latitude: null,
@@ -100,21 +73,17 @@ const [capturedImages, setCapturedImages] = useState([]);
     userId: user.id,
     patientVictimId: '',
     nearestLandMark: '',
-    
     // Vehicle and Drivers
     drivers: [],
     vehicles: [],
-    
     // Casualties
     casualties: [],
-    
     // Accident Details
     weatherCondition: '',
     visibility: '',
     roadSurfaceCondition: '',
     roadType: '',
     roadMarkings: '',
-    
     // Evidence
     imageUri: null,
     audioUri: null,
@@ -126,7 +95,6 @@ const [capturedImages, setCapturedImages] = useState([]);
       videosRecorded: false,
       sketchPrepared: false
     },
-    
     // Officer Info
     officerName: '',
     officerDesignation: '',
@@ -146,15 +114,44 @@ const [capturedImages, setCapturedImages] = useState([]);
     // Witnesses
     witnesses: [],
     vehicleFitnessDetails:[],
-    imageDTOs:[]
+    imageDTOs:[],
+    imageUris:[]
   });
+
+  // initialize from initialData if view-mode
+  useEffect(() => {
+    if (initialData) {
+      setFormData(prev => ({ ...prev, ...initialData }));
+      if (initialData.latitude && initialData.longitude) {
+        setMapLocation({ latitude: initialData.latitude, longitude: initialData.longitude });
+      }
+      setCapturedImages(initialData.imageUris || []);
+    }
+  }, [initialData]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [capturedImages, setCapturedImages] = useState([]);
+  const [mapLocation, setMapLocation] = useState(null);
 
   const genderData = [
     {id:1,  label: 'Male', value: 'male' },
     {id:2,  label: 'Female', value: 'female' },
     {id:3,  label: 'Other', value: 'other' }
   ];
+    // Handler for dynamic arrays
+    const handleArrayUpdate = (field, index, key, value) => {
+      const updatedArray = [...formData[field]];
+      updatedArray[index][key] = value;
+      setFormData(prev => ({ ...prev, [field]: updatedArray }));
+    };
 
+    // Add new entry to array
+    const addArrayEntry = (field, template) => {
+      setFormData(prev => ({ 
+        ...prev, 
+        [field]: [...prev[field], template] 
+      }));
+    };
     // Add this handler in your parent component
   const handleArrayRemove = (field, index) => {
     setFormData(prev => ({
@@ -162,32 +159,16 @@ const [capturedImages, setCapturedImages] = useState([]);
       [field]: prev[field].filter((_, i) => i !== index)
     }));
   };
-
-  const fillImageDto = async (capturedData) => {
-    let imageDTOs = [];
-    console.log(capturedData);
-    if (capturedData.length > 0) {
-      const results = await Promise.allSettled(
-        capturedData.map(uri => compressImage(uri))
-      );
-      imageDTOs = results.map(result => {
-        if (result.status === 'fulfilled') {
-          return {
-            imageDate: new Date().toISOString(), // Add current date-time
-            imageData: result.value             // Compressed image data from compressImage
-          };
-        } else {
-          // Optionally, return an error field for failed compressions
-          return {
-            imageDate: new Date().toISOString(),
-            imageData: null,
-            error: result.reason
-          };
-        }
-      });
-    }
-    return imageDTOs;
+  // Callback to receive images from MultipleCameraComponent
+  const handleImageCapture = (uris) => {
+    setCapturedImages(uris);
+    setFormData(prev => ({
+      ...prev,
+      imageUris: uris
+    }));
   };
+
+  
   const inputHandling = (fieldName, data) => {
     console.log(data);
     setFormData((prev) => ({
@@ -245,8 +226,15 @@ const [capturedImages, setCapturedImages] = useState([]);
     }finally {
     setIsSubmitting(false);
   }
-  
   };
+
+  // fetch LOVs
+  useEffect(() => {
+    if (!accidentTypes.length || !weatherConditions.length) {
+      dispatch(fetchAllLovs()).unwrap().catch(console.error);
+    }
+  }, [accidentTypes, weatherConditions, dispatch]);
+
   return (
 
     <View className="flex-1 bg-white">
@@ -276,7 +264,7 @@ const [capturedImages, setCapturedImages] = useState([]);
 
 
 
-        <TextBox label="Nearest LandMark" onChangeText={(text) => inputHandling('nearestLandMark', text)}/>
+        <TextBox label="Nearest LandMark" editable={editable} onChangeText={(text) => inputHandling('nearestLandMark', text)} value={formData.nearestLandMark}/>
 
 
   
@@ -284,11 +272,15 @@ const [capturedImages, setCapturedImages] = useState([]);
           label="Total Number of Affected"
           keyboardType="numeric"
           onChangeText={(text) => inputHandling('numAffecties', text)}
+          editable={editable}
+          value={String(formData.numAffecties)}
         />
         <TextBox
           label="Age of Affected"
           keyboardType="numeric"
           onChangeText={(text) => inputHandling('age', text)}
+          editable={editable}
+          value={String(formData.age || '')}
         />
         {/* <TextBox
           label="Gender of Affected"
@@ -297,6 +289,8 @@ const [capturedImages, setCapturedImages] = useState([]);
 
         <TextBox label="Other Details"
         onChangeText={(text) => inputHandling('description', text)}
+        editable={editable}
+        value={formData.description}
         />
 
           <SimpleDropDownMenu className="bg-slate-200"
@@ -306,6 +300,8 @@ const [capturedImages, setCapturedImages] = useState([]);
             imageField="image"
             placeholder="Select Patient Victim" // Pass the callback function
             data={patientVictim}
+            value={formData.patientVictimId}
+            disabled={!editable}
             onItemSelect={(value) => { 
               inputHandling('patientVictimId', value.id)}}
           />
@@ -317,6 +313,8 @@ const [capturedImages, setCapturedImages] = useState([]);
             imageField="image"
             placeholder="Select Vechile Involved" // Pass the callback function
             data={vehicleInvolved}
+            value={formData.vehicleInvolvedId}
+            disabled={!editable}
             onItemSelect={(value) => inputHandling('vehicleInvolvedId', value.id)}
           />
 
@@ -326,9 +324,10 @@ const [capturedImages, setCapturedImages] = useState([]);
           valueField="id"
           labelField="label"
           placeholder="Select Gender" // Pass the callback function
+          value={formData.gender}
+            disabled={!editable}
           onItemSelect={(value) => {
-            console.log(value);
-            inputHandling('gender', value.id)}}
+            inputHandling('gender', value.label)}}
         />
        
          {/* Environmental Factors */}
@@ -340,6 +339,8 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="label"
               imageField="image"
               placeholder="Select Accident Type" // Pass the callback function
+              value={formData.accidentTypeId}
+              disabled={!editable}
               data={accidentTypes}
               onItemSelect={(value) => {inputHandling('accidentTypeId', value.id);inputHandling('accidentTypeLabel', value.label);inputHandling('accidentTypeDescription', value.description)}}
             />
@@ -350,15 +351,18 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="cause"
               imageField="image"
               placeholder="Select Apparent Cause"
+              value={formData.cause}
+              disabled={!editable}
               onItemSelect={(item) => setFormData(prev => ({ ...prev, cause: item.id }))}
             />
-            
             <GenericDropDownMenu className="bg-slate-200"
               data={weatherConditions}
               valueField="id"
               labelField="condition"
               imageField="image"
               placeholder="Select Weather"
+              value={formData.weatherCondition}
+              disabled={!editable}
               onItemSelect={(item) => setFormData(prev => ({ ...prev, weatherCondition: item.id }))}
             />
 
@@ -368,6 +372,8 @@ const [capturedImages, setCapturedImages] = useState([]);
               valueField="id"
               labelField="level"
               imageField="image"
+              value={formData.visibility}
+              disabled={!editable}
               onItemSelect={(item) => setFormData(prev => ({ ...prev, visibility: item.id }))}
             />
             <GenericDropDownMenu className="bg-slate-200"
@@ -376,6 +382,8 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="condition"
               imageField="image"
               placeholder="Select Road Surface Conditions"
+              value={formData.roadSurfaceCondition}
+              disabled={!editable}
               onItemSelect={(item) => setFormData(prev => ({ ...prev, roadSurfaceCondition: item.id }))}
             />
             <GenericDropDownMenu className="bg-slate-200"
@@ -384,6 +392,8 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="type"
               imageField="image"
               placeholder="Select Road Type"
+              value={formData.roadType}
+              disabled={!editable}
               onItemSelect={(item) => setFormData(prev => ({ ...prev, roadType: item.id }))}
             />
              <GenericDropDownMenu className="bg-slate-200"
@@ -392,6 +402,8 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="status"
               imageField="image"
               placeholder="Select Road Markings / Signage"
+              value={formData.roadMarkings}
+              disabled={!editable}
               onItemSelect={(item) => setFormData(prev => ({ ...prev, roadMarkings: item.id }))}
             />
         {/* // VEHICLE FITNESS & DOCUMENT VERIFICATION */}
@@ -399,21 +411,29 @@ const [capturedImages, setCapturedImages] = useState([]);
         <DynamicFormSection
           title="Add Vehicle Fitness Details"
           items={formData.vehicleFitnessDetails}
+          disabled={!editable}
+          editable={editable}
           fields={[
             {
               label: 'Vehicle Number',
               key: 'vehicleNo',
               type: 'text'
             },
+            // {
+            //   label: 'Select Fitness Certificate Valid',
+            //   key: 'fitnessCertificateValid',
+            //   type: 'dropdown',
+            //   data: [
+            //     { id: 1, label: 'Yes', value: true },
+            //     { id: 2, label: 'No', value: false }
+            //   ],
+            //   labelField: 'label',
+            //   valueField: 'value'
+            // },
             {
-              label: 'Select Fitness Certificate Valid',
+              label: 'Is Fitness Certificate Valid?',
               key: 'fitnessCertificateValid',
-              type: 'dropdown',
-              data: [
-                { id: 1, label: 'Yes', value: true },
-                { id: 2, label: 'No', value: false }
-              ],
-              labelField: 'label',
+              type: 'toggle',
               valueField: 'value'
             },
             {
@@ -425,25 +445,17 @@ const [capturedImages, setCapturedImages] = useState([]);
               label: 'Select Road Tax Status',
               key: 'roadTaxStatus',
               type: 'dropdown',
-              data: [
-                { id: 1, label: 'Paid' },
-                { id: 2, label: 'Unpaid' },
-                { id: 3, label: 'Pending' }
-              ],
+              data:roadTaxStatuses,
               labelField: 'label',
-              valueField: 'label'
+              valueField: 'id'
             },
             {
               label: 'Select Insurance Status',
               key: 'insuranceStatus',
               type: 'dropdown',
-              data: [
-                { id: 1, label: 'Active' },
-                { id: 2, label: 'Expired' },
-                { id: 3, label: 'Pending Renewal' }
-              ],
+              data: insuranceStatuses,
               labelField: 'label'
-              ,valueField: 'label'
+              ,valueField: 'id'
             }
           ]}
           onAdd={() => addArrayEntry('vehicleFitnessDetails', {
@@ -463,25 +475,23 @@ const [capturedImages, setCapturedImages] = useState([]);
           <DynamicFormSection
             title="Add Vehicles Involved"
             items={formData.vehicles}
+            disabled={!editable}
+            editable={editable}
             fields={[
               { label: 'Registration No', key: 'registrationNo' },
               { label: 'Select Vehicle Type', key: 'type', type: 'dropdown', data: vehicleInvolved,labelField:'label',valueField: 'id' },
               { label: 'Select Condition', key: 'condition', type: 'dropdown', 
-                data: [{id:1,label:'Minor'}, {id:2,label:'Major'}, {id:3,label:'Total Loss'}],labelField:'label',valueField: 'label' },
+                data: vehicleConditions,labelField:'label',valueField: 'id' },
                 {
                   label: 'Select Vehicle Fitness Certificate Status',
                   key: 'fitnessCertificateStatus',
                   type: 'dropdown',
-                  data: [
-                    { id: 1, label: 'Valid' },
-                    { id: 2, label: 'Expired' },
-                    { id: 3, label: 'Not Available' }
-                  ],
+                  data: fitnessCertificateStatuses,
                   labelField: 'label'
-                  ,valueField: 'label'
+                  ,valueField: 'id'
                 }
             ]}
-            onAdd={() => addArrayEntry('vehicles', { registration: '', type: '', condition: '' })}
+            onAdd={() => addArrayEntry('vehicles', { registrationNo: '', type: '', condition: '' })}
             onUpdate={(index, key, value) => handleArrayUpdate('vehicles', index, key, value)}
             onRemove={(index) => handleArrayRemove('vehicles', index)}
 
@@ -493,6 +503,8 @@ const [capturedImages, setCapturedImages] = useState([]);
           <DynamicFormSection
             title="Add Drivers Involved"
             items={formData.drivers}
+            disabled={!editable}
+            editable={editable}
             fields={[
               { label: 'Name', key: 'name' },
               { label: 'CNIC', key: 'cnicNo' },
@@ -510,12 +522,13 @@ const [capturedImages, setCapturedImages] = useState([]);
           <DynamicFormSection
             title="Add Casualties/Passengers"
             items={formData.casualties}
+            disabled={!editable}
+            editable={editable}
             fields={[
-              { label: 'Select Type', key: 'type', type: 'dropdown', data: [{id:1,label:'Casualities'}, {id:2,label:'Passengers'}, {id:3,label:'Injured'}],labelField:'label',valueField: 'label' },
+              { label: 'Select Type', key: 'type', type: 'dropdown', data: casualtiesStatuses,labelField:'label',valueField: 'id' },
               { label: 'Name', key: 'name' },
               { label: 'Hospital', key: 'hospitalName' },
-              { label: 'Select Injury Severity', key: 'injurySeverity', 
-                type: 'dropdown', data: [{id:1,label:'Fatal'}, {id:2,label:'Major'}, {id:3,label:'Minor'}],labelField:'label',valueField: 'label' }
+              { label: 'Select Injury Severity', key: 'injurySeverity', injurySeverities,labelField:'label',valueField: 'label' }
             ]}
             onAdd={() => addArrayEntry('casualties', { type: '', name: '', hospitalName: '', injurySeverity: '' })}
             onUpdate={(index, key, value) => handleArrayUpdate('casualties', index, key, value)}
@@ -527,6 +540,8 @@ const [capturedImages, setCapturedImages] = useState([]);
           <DynamicFormSection
             title="Add Witness"
             items={formData.witnesses}
+            disabled={!editable}
+            editable={editable}
             fields={[
               { label: 'Name', key: 'name' },
               { label: 'Contact Number', key: 'contactNo' },
@@ -547,20 +562,56 @@ const [capturedImages, setCapturedImages] = useState([]);
               labelField="fault"
               imageField="image"
               placeholder="Select Preliminary Fault Assessment"
+              value={formData.preliminaryFault}
+              disabled={!editable}
               onItemSelect={(item) => setFormData(prev => ({ ...prev, preliminaryFault: item.id }))}
             /> 
 
               <TextBox label="Observations/Notes"
               onChangeText={(text) => inputHandling('officerNotes', text)}
+              value={formData.officerNotes}
+              editable={editable}
               />
 
           <Text className="text-xl font-bold my-2 text-gray-800">FOLLOW-UP ACTIONS</Text>
-          <FollowUpActions onChange={(data) => {
-        setFormData(prev => ({
-          ...prev,
-          followUp: data
-        }));
-      }} dropDownData={caseReferredTo}/>
+
+          <FollowUpActions
+            onChange={data => setFormData(prev => ({ ...prev, followUp: data }))}
+            dropDownData={caseReferredTo}
+            disabled={!editable}
+            editable={editable}
+            initialValues={formData.followUp}
+          />
+
+          {/* <DynamicFormSection
+            title="Add Follow Up Actions"
+            items={formData.followUp}
+            disabled={!editable}
+            editable={editable}
+            maxItems={1}
+            fields={[
+              {
+                label: 'Is firRegistered?',
+                key: 'firRegistered',
+                type: 'toggle',
+                valueField: 'value'
+              },
+              { label: 'firNumber', key: 'firNumber' },
+              {
+                label: 'Is challanIssued?',
+                key: 'challanIssued',
+                type: 'toggle',
+                valueField: 'value'
+              },
+              { label: 'challanNumber', key: 'challanNumber' },
+              { label: 'Select CaseReferredTo', key: 'caseReferredTo', type: 'dropdown', 
+                data: caseReferredTo,labelField:'label',valueField: 'id' },
+            ]}
+            onAdd={() => addArrayEntry('followUp', { firRegistered: false, firNumber: '', challanIssued: false,challanNumber:'', caseReferredTo:''})}
+            onUpdate={(index, key, value) => handleArrayUpdate('followUp', index, key, value)}
+            onRemove={(index) => handleArrayRemove('followUp', index)}
+
+          /> */}
 
        {/* Evidence Section */}
           <Text className="text-xl font-bold my-2 text-gray-800">Evidence Collection</Text>
@@ -568,6 +619,7 @@ const [capturedImages, setCapturedImages] = useState([]);
             <EvidenceToggle
               label="Photos"
               value={formData.evidence.photosTaken}
+              disabled={!editable}
               onValueChange={(v) => setFormData(prev => ({
                 ...prev,
                 evidence: { ...prev.evidence, photosTaken: v }
@@ -576,6 +628,7 @@ const [capturedImages, setCapturedImages] = useState([]);
             <EvidenceToggle
               label="Sketch"
               value={formData.evidence.sketchPrepared}
+              disabled={!editable}
               onValueChange={(v) => setFormData(prev => ({
                 ...prev,
                 evidence: { ...prev.evidence, sketchPrepared: v }
@@ -584,6 +637,7 @@ const [capturedImages, setCapturedImages] = useState([]);
             <EvidenceToggle
               label="Video"
               value={formData.evidence.videosRecorded}
+              disabled={!editable}
               onValueChange={(v) => setFormData(prev => ({
                 ...prev,
                 evidence: { ...prev.evidence, videosRecorded: v }
@@ -595,14 +649,17 @@ const [capturedImages, setCapturedImages] = useState([]);
       {/* <CameraComponent initialUri={savedUri} editable={false} /> */}
       <MultipleCameraComponent 
         onCapture={handleImageCapture} 
-        editable={true} 
-        initialUris={[]} 
+        editable={editable}
+        initialUris={formData.imageUris}
       />
         {/* Recorder with a 1-minute time limit */}
-      <AudioRecorder expiryTime={60000} onRecordingComplete={(path)=>inputHandling('audioUri', path)} />
+      <AudioRecorder expiryTime={60000} onRecordingComplete={(path)=>inputHandling('audioUri', path)} disabled={!editable} />
 
-      {/* Show the player if there is recorded audio */}
-      {formData.audioUri && <AudioPlayer audioPath={formData.audioUri} />}
+      {formData.audioUri ? (
+        <>
+          <Text style={styles.text}>Click Button To Play Recorded Audio.</Text>
+          <AudioPlayer audioPath={formData.audioUri}/>
+        </>) : null}
 
         <CustomButton onPress={handleSubmit} title="SUBMIT"  disabled={isSubmitting}
         loading={isSubmitting}/>
@@ -622,5 +679,10 @@ const styles = StyleSheet.create({
     height: 200,
     marginTop: 20,
   },
+  text:{
+    fontSize: 16,
+    color: 'grey',
+    marginBottom: 10,
+  }
 });
 export default InvestigationForm;

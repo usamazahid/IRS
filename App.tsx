@@ -57,14 +57,14 @@ const App: React.FC = () => {
           <Stack.Screen name="ReportAccident">
             {(props) => (
               <AuthGuard {...props} requiredPermissions={['report_accident']}>
-                <ReportAccident />
+                <ReportAccident {...props} />
               </AuthGuard>
             )}
           </Stack.Screen>
           <Stack.Screen name="InvestigationForm">
             {(props) => (
               <AuthGuard {...props} requiredPermissions={['investigation_form']}>
-                <InvestigationForm />
+                <InvestigationForm {...props}/>
               </AuthGuard>
             )}
           </Stack.Screen>

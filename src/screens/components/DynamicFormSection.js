@@ -3,10 +3,10 @@ import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import TextBox from './TextBox';
 import {PlusCircleIcon, XMarkIcon} from 'react-native-heroicons/solid';
 import GenericDropDownMenu from './GenericDropDownMenu';
-
+import EvidenceToggle from './EvidenceToggle';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-const DynamicFormSection = ({title, items, fields, onAdd, onUpdate,onRemove}) => {
+const DynamicFormSection = ({title, items=[], fields, onAdd, onUpdate,onRemove,disabled = false,editable=true,maxItems = 10}) => {
     const [showDatePicker, setShowDatePicker] = useState(null);
 
     const handleDateChange = (event, selectedDate, index, fieldKey) => {
@@ -15,22 +15,29 @@ const DynamicFormSection = ({title, items, fields, onAdd, onUpdate,onRemove}) =>
         onUpdate(index, fieldKey, selectedDate.toISOString().split('T')[0]);
       }
     };
+    const safeItems = Array.isArray(items) ? items : [];
+     const canAdd = safeItems.length < maxItems && editable && !disabled;
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
-        <TouchableOpacity onPress={onAdd} style={styles.addButton}>
-          <PlusCircleIcon size={24} color="#3b82f6" />
+        <TouchableOpacity
+          onPress={onAdd}
+          style={[styles.addButton, !canAdd && styles.addButtonDisabled]}
+          disabled={!canAdd}
+        >
+          <PlusCircleIcon size={24} color={canAdd ? '#3b82f6' : '#ccc'} />
         </TouchableOpacity>
       </View>
 
-      {items.map((item, index) => (
+      {safeItems.map((item, index) => (
         <View key={index} style={styles.itemContainer}>
           <View style={styles.itemHeader}>
             <Text style={styles.itemNumber}>Entry {index + 1}</Text>
             <TouchableOpacity
               onPress={() => onRemove(index)}
-              style={styles.deleteButton}>
+              style={styles.deleteButton}
+              disabled={disabled}>
               <XMarkIcon size={20} color="#dc2626" />
             </TouchableOpacity>
           </View>
@@ -43,6 +50,8 @@ const DynamicFormSection = ({title, items, fields, onAdd, onUpdate,onRemove}) =>
                   labelField={field.labelField}
                   imageField="image"
                   placeholder={field.label}
+                  value={item[field.key]}
+                  disabled={disabled}
                   onItemSelect={selected =>
                     onUpdate(
                       index,
@@ -51,11 +60,26 @@ const DynamicFormSection = ({title, items, fields, onAdd, onUpdate,onRemove}) =>
                     )
                   }
                 />
-              ) : field.type === 'date' ? (
+              ) : field.type === 'toggle' ? (
+                <EvidenceToggle
+                label={field.label}
+                value={item[field.key]}
+                disabled={!editable}
+                onValueChange={selected =>
+                  onUpdate(
+                    index,
+                    field.key,
+                    selected
+                  )
+                }
+              />
+              ): field.type === 'date' ? (
                 <>
                   <TouchableOpacity
-                    onPress={() => setShowDatePicker({index, key: field.key})}>
+                    onPress={() => setShowDatePicker({index, key: field.key})}
+                    >
                     <TextBox
+                      style={styles.input}
                       label={field.label}
                       value={item[field.key]}
                       editable={false}
@@ -81,9 +105,11 @@ const DynamicFormSection = ({title, items, fields, onAdd, onUpdate,onRemove}) =>
                 </>
               ) : (
                 <TextBox
+                  style={styles.input}
                   label={field.label}
                   value={item[field.key]}
                   onChangeText={text => onUpdate(index, field.key, text)}
+                  editable={editable}
                 />
               )}
             </View>
@@ -138,6 +164,15 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontWeight: '500',
   },
+  input: {
+    color:'black',
+    borderWidth: 1,
+    borderColor: '#bdc3c7',
+    borderRadius: 4,
+    padding: 10,
+    marginTop: 8,
+  },
+  addButtonDisabled: { opacity: 0.5 },
 });
 
 export default DynamicFormSection;

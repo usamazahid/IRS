@@ -37,13 +37,20 @@ export const clearOfflineReports = async () => {
 export const syncOfflineReports = async () => {
   try {
     const offlineReports = await getOfflineReports();
-    if (offlineReports.length === 0) return;
+    if (offlineReports.length === 0) {return;}
 
     const successfulSubmissions = [];
     const remainingReports = [];
 
     for (const report of offlineReports) {
       if (report.retries >= MAX_RETRIES) {
+        if(report.viewOfflineReport) {
+          remainingReports.push(report); // Keep in storage for viewing
+          console.warn(
+            `Report ${report.createdAt} is marked as viewable, skipping submission`,
+          );
+          continue;
+        }
         console.warn(
           `Skipping report ${report.createdAt}: max retries reached`,
         );

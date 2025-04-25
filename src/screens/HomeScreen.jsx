@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import TopBar from './components/TopBarComponent';
 import { hasRequiredPermissions } from '../utils/permissionUtils'; 
 import { logout } from '../redux/slices/authSlice'; // Adjust the path to where your authSlice is located
+import { resetLovs } from '../redux/slices/dropdownSlice'; // Adjust the path to where your authSlice is located
 import {useSnackBar} from '../context/SnackBarContext'
 const HomeScreen = () => {
     const { showSnackBar } = useSnackBar();
@@ -20,7 +21,8 @@ const HomeScreen = () => {
     const { user, role, permissions } = useSelector((state) => state.auth);
     const navigation = useNavigation();
     const handleLogout = () => {
-        dispatch(logout()); 
+        dispatch(logout());
+        dispatch(resetLovs()); 
         showSnackBar('Successful Logout');
         NavigationService.navigate('Login');
       };

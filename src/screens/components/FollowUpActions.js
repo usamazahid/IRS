@@ -1,34 +1,44 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {View, Text, TextInput, StyleSheet} from 'react-native';
 import EvidenceToggle from './EvidenceToggle'; // Make sure this component is imported
 import GenericDropDownMenu from './GenericDropDownMenu';
+const FollowUpActions = ({onChange, dropDownData, disabled = false, editable = true, initialValues}) => {
+  // State initialization with initial values
+  const [formState, setFormState] = useState({
+    firRegistered: false,
+    firNumber: '',
+    challanIssued: false,
+    challanNumber: '',
+    caseReferredTo: ''
+  });
 
-const FollowUpActions = ({onChange,dropDownData}) => {
-  const [firRegistered, setFirRegistered] = useState(false);
-  const [firNumber, setFirNumber] = useState('');
-  const [challanIssued, setChallanIssued] = useState(false);
-  const [challanNumber, setChallanNumber] = useState('');
-  const [caseReferredTo, setCaseReferredTo] = useState('');
+  // Single useEffect for initial values and updates
+  useEffect(() => {
+    if (initialValues) {
+      setFormState(prev => ({
+        ...prev,
+        ...initialValues
+      }));
+    }
+  }, [initialValues]); // Only re-run when initialValues reference changes
 
-  // Create a safe copy of dropdown data to prevent mutations
-  const safeDropDownData = dropDownData?.map(item => ({...item})) || [];
-
-
-  const handleCaseReferral = selected => {
-    // Use Object.assign to create new object reference
-    setCaseReferredTo(selected?.id || '');
-    handleUpdate();
-  };
-
-  const handleUpdate = () => {
-    onChange({
-      firRegistered,
-      firNumber,
-      challanIssued,
-      challanNumber,
-      caseReferredTo,
+  // Memoized update handler
+  const handleUpdate = useCallback((newState) => {
+    setFormState(prev => {
+      const updatedState = {...prev, ...newState};
+      onChange(updatedState);
+      return updatedState;
     });
-  };
+  }, [onChange]);
+
+  const handleCaseReferral = useCallback(selected => {
+    if (!disabled) {
+      handleUpdate({caseReferredTo: selected?.id || ''});
+    }
+  }, [disabled, handleUpdate]);
+
+  // Create a safe copy of dropdown data
+  const safeDropDownData = dropDownData?.map(item => ({...item})) || [];
 
   return (
     <View style={styles.section}>
@@ -39,24 +49,22 @@ const FollowUpActions = ({onChange,dropDownData}) => {
         <View style={styles.toggleRow}>
           <EvidenceToggle
             label="FIR Registered?"
-            value={firRegistered}
-            onValueChange={value => {
-              setFirRegistered(value);
-              if (!value) setFirNumber(''); // Clear FIR number when toggled off
-              handleUpdate();
-            }}
+            value={formState.firRegistered}
+            disabled={disabled}
+            onValueChange={value => handleUpdate({
+              firRegistered: value,
+              firNumber: value ? formState.firNumber : ''
+            })}
           />
         </View>
-        {firRegistered && (
+        {formState.firRegistered && (
           <TextInput
             style={styles.input}
             placeholder="FIR Number"
-            placeholderTextColor="#7f8c8d" // 🔹 Set a visible placeholder color (light gray)
-            value={firNumber}
-            onChangeText={text => {
-              setFirNumber(text);
-              handleUpdate();
-            }}
+            placeholderTextColor="#7f8c8d"
+            value={formState.firNumber}
+            editable={editable}
+            onChangeText={text => handleUpdate({firNumber: text})}
           />
         )}
       </View>
@@ -66,24 +74,22 @@ const FollowUpActions = ({onChange,dropDownData}) => {
         <View style={styles.toggleRow}>
           <EvidenceToggle
             label="Challan Issued?"
-            value={challanIssued}
-            onValueChange={value => {
-              setChallanIssued(value);
-              if (!value) setChallanNumber(''); // Clear Challan number when toggled off
-              handleUpdate();
-            }}
+            value={formState.challanIssued}
+            disabled={disabled}
+            onValueChange={value => handleUpdate({
+              challanIssued: value,
+              challanNumber: value ? formState.challanNumber : ''
+            })}
           />
         </View>
-        {challanIssued && (
+        {formState.challanIssued && (
           <TextInput
             style={styles.input}
             placeholder="Challan Number"
-            placeholderTextColor="#7f8c8d" // 🔹 Set a visible placeholder color (light gray)
-            value={challanNumber}
-            onChangeText={text => {
-              setChallanNumber(text);
-              handleUpdate();
-            }}
+            placeholderTextColor="#7f8c8d"
+            value={formState.challanNumber}
+            editable={editable}
+            onChangeText={text => handleUpdate({challanNumber: text})}
           />
         )}
       </View>
@@ -97,13 +103,14 @@ const FollowUpActions = ({onChange,dropDownData}) => {
           valueField="id"
           labelField="unit"
           placeholder="Select Case Referred"
+          disabled={disabled}
+          value={formState.caseReferredTo}
           onItemSelect={handleCaseReferral}
         />
       </View>
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   section: {
     marginVertical: 16,

@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { submitAccidentReport } from '../services/accidentService';
 
 const OFFLINE_QUEUE_KEY = '@offline_reports';
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 10;
 
 const OfflineReportsScreen = () => {
   const [reports, setReports] = useState([]);
@@ -79,6 +79,19 @@ const OfflineReportsScreen = () => {
     setModalVisible(true);
   };
 
+  // Navigate to form screen with disabled editing flag, pass callback
+  const viewReportFullReport = (report) => {
+    const defaultValues = {
+      initialData: report,
+      editable: false,
+      returnId: report.createdAt,
+    }
+    console.log('useCase:', report.useCase);
+    if(report.useCase){
+       NavigationService.navigate(report.useCase,defaultValues );
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Text style={styles.title}>{item.accidentTypeLabel}</Text>
@@ -106,6 +119,16 @@ const OfflineReportsScreen = () => {
             onPress={() => deleteReport(item)}
             color="transparent"
             textColor="red"
+          />
+        </View>
+      </View>
+      <View >
+        <View style={styles.actionButton}>
+          <CustomButton
+            title="View Full Report"
+            onPress={() => viewReportFullReport(item)}
+            color="transparent"
+            textColor="blue"
           />
         </View>
       </View>

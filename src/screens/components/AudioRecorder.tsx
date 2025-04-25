@@ -3,12 +3,19 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform, PermissionsAndroid,
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import * as Progress from 'react-native-progress';
 
+/**
+ * Props:
+ *  - expiryTime: optional time limit in ms
+ *  - onRecordingComplete: callback with recorded file path
+ *  - disabled: when true, recording cannot be started or paused/resumed/stopped
+ */
 interface AudioRecorderProps {
-  expiryTime?: number; // Optional time limit in milliseconds (default 1 min)
+  expiryTime?: number;
   onRecordingComplete: (audioPath: string | null) => void;
+  disabled?: boolean;
 }
 
-const AudioRecorder: React.FC<AudioRecorderProps> = ({ expiryTime = 60000, onRecordingComplete }) => {
+const AudioRecorder: React.FC<AudioRecorderProps> = ({ expiryTime = 60000, onRecordingComplete, disabled = false }) => {
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState('00:00');
@@ -22,19 +29,16 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ expiryTime = 60000, onRec
     if (Platform.OS === 'android') {
       try {
         if (Platform.Version >= 33) {
-          // Android 13 and above, request RECORD_AUDIO only
           const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
           );
           return granted === PermissionsAndroid.RESULTS.GRANTED;
         } else {
-          // For Android below 13, request additional permissions
           const granted = await PermissionsAndroid.requestMultiple([
             PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
             PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
             PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
           ]);
-
           return (
             granted['android.permission.RECORD_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED &&
             granted['android.permission.WRITE_EXTERNAL_STORAGE'] === PermissionsAndroid.RESULTS.GRANTED &&
@@ -46,21 +50,19 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ expiryTime = 60000, onRec
         return false;
       }
     }
-    // For iOS or other platforms
     return true;
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       audioRecorderPlayer.current?.stopRecorder();
       audioRecorderPlayer.current?.removeRecordBackListener();
-      clearInterval(timerRef.current!); // Ensure interval cleanup
+      if (timerRef.current) {clearInterval(timerRef.current);}
     };
   }, []);
 
-  // Start recording
   const startRecording = async () => {
+    if (disabled) {return;}                 // <-- respect disabled flag
     const hasPermission = await requestPermissions();
     if (!hasPermission) {
       Alert.alert('Permissions Required', 'You need to grant permissions to record audio.');
@@ -77,22 +79,15 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ expiryTime = 60000, onRec
       const audioPath = await audioRecorderPlayer.current.startRecorder();
       console.log('Recording started at:', audioPath);
 
-      // Update elapsed time and progress
       timerRef.current = setInterval(() => {
         setElapsedTime((prevTime) => {
           const newTime = prevTime + 1000;
-          const newProgress = newTime / expiryTime;
-          setProgress(newProgress);
-
-          // Stop recording when expiry time is reached
-          if (newTime >= expiryTime) {
-            stopRecording();
-          }
+          setProgress(newTime / expiryTime);
+          if (newTime >= expiryTime) {stopRecording();}
           return newTime;
         });
       }, 1000);
 
-      // Set recording time
       audioRecorderPlayer.current.addRecordBackListener((e) => {
         setCurrentTime(audioRecorderPlayer.current.mmss(Math.floor(e.currentPosition)));
       });
@@ -102,30 +97,26 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ expiryTime = 60000, onRec
     }
   };
 
-  // Pause recording
   const pauseRecording = async () => {
+    if (disabled) {return;}
     try {
       await audioRecorderPlayer.current.pauseRecorder();
       setPaused(true);
-      clearInterval(timerRef.current!);
+      if (timerRef.current) {clearInterval(timerRef.current)};
     } catch (error) {
       Alert.alert('Pause Error', 'Failed to pause recording');
     }
   };
 
-  // Resume recording
   const resumeRecording = async () => {
+    if (disabled) {return;}
     try {
       await audioRecorderPlayer.current.resumeRecorder();
       setPaused(false);
-
-      // Restart the timer after resuming
       timerRef.current = setInterval(() => {
         setElapsedTime((prevTime) => {
           const newTime = prevTime + 1000;
-          const newProgress = newTime / expiryTime;
-          setProgress(newProgress);
-
+          setProgress(newTime / expiryTime);
           if (newTime >= expiryTime) stopRecording();
           return newTime;
         });
@@ -135,17 +126,15 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ expiryTime = 60000, onRec
     }
   };
 
-  // Stop recording
   const stopRecording = async () => {
-    if (!recording) return;
-
+    if (disabled || !recording) {return;}
     try {
       const result = await audioRecorderPlayer.current.stopRecorder();
       setRecording(false);
       setPaused(false);
       setCurrentTime('00:00');
       setProgress(0);
-      clearInterval(timerRef.current!); // Clear timer when stopped
+      if (timerRef.current) {clearInterval(timerRef.current)};
       onRecordingComplete(result);
     } catch (error) {
       Alert.alert('Stop Error', 'Failed to stop recording');
@@ -161,17 +150,33 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ expiryTime = 60000, onRec
           <Text style={styles.elapsedTimeText}>{currentTime}</Text>
         </View>
       )}
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         onPress={recording ? (paused ? resumeRecording : pauseRecording) : startRecording}
-        style={[styles.button, recording ? styles.pauseButton : styles.startButton]}>
+        style={[
+          styles.button,
+          recording ? styles.pauseButton : styles.startButton,
+          disabled && styles.disabledButton  // <-- disabled style
+        ]}
+        disabled={disabled}                  // <-- disable touch
+      >
         <Text style={styles.buttonText}>
-          {recording ? (paused ? 'Resume Recording' : 'Pause Recording') : 'Start Recording'}
+          {disabled
+            ? 'Recording Disabled'
+            : recording
+            ? paused
+              ? 'Resume Recording'
+              : 'Pause Recording'
+            : 'Start Recording'}
         </Text>
       </TouchableOpacity>
-      
+
       {recording && (
-        <TouchableOpacity onPress={stopRecording} style={[styles.button, styles.stopButton]}>
+        <TouchableOpacity
+          onPress={stopRecording}
+          style={[styles.button, styles.stopButton, disabled && styles.disabledButton]}
+          disabled={disabled}
+        >
           <Text style={styles.buttonText}>Stop</Text>
         </TouchableOpacity>
       )}
@@ -188,6 +193,7 @@ const styles = StyleSheet.create({
   startButton: { backgroundColor: 'green' },
   pauseButton: { backgroundColor: 'orange' },
   stopButton: { backgroundColor: 'red' },
+  disabledButton: { opacity: 0.5 }, // visually indicate disabled
   buttonText: { color: 'white', fontWeight: 'bold' },
 });
 
