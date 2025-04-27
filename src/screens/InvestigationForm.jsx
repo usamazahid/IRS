@@ -26,7 +26,7 @@ import EvidenceToggle from './components/EvidenceToggle';
 import DynamicFormSection from './components/DynamicFormSection';
 import FollowUpActions from './components/FollowUpActions';
 import NetInfo from '@react-native-community/netinfo';
-import { saveReportOffline } from '../services/OfflineService';
+import { saveReportOffline,removeOfflineReport } from '../services/OfflineService';
 import MultipleCameraComponent from './components/MulitpleCameraComponent';
 import { hasRequiredPermissions } from '../utils/permissionUtils';
 const InvestigationForm = ({ route }) => {
@@ -34,8 +34,9 @@ const InvestigationForm = ({ route }) => {
   const dispatch = useDispatch();
 
  // navigation params for view-mode
-  const { initialData = null, editable: editableFlag = true } = route.params || {};
+  const { initialData = null, editable: editableFlag = true,isUpdateData: isUpdateDataFlag = false } = route.params || {};
   const editable = Boolean(editableFlag);
+  const isUpdateData = Boolean(isUpdateDataFlag);
 
   // LOV URLs
   const ACCIDENT_TYPES_URL = `${API_BASE_URL}/irs/getAccidentTypes`;
@@ -126,13 +127,15 @@ const InvestigationForm = ({ route }) => {
         setMapLocation({ latitude: initialData.latitude, longitude: initialData.longitude });
       }
       setCapturedImages(initialData.imageUris || []);
+      setReportKey(initialData.createdAt);
     }
   }, [initialData]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [capturedImages, setCapturedImages] = useState([]);
   const [mapLocation, setMapLocation] = useState(null);
-
+  const [reportKey,setReportKey]=useState(null);
   const genderData = [
     {id:1,  label: 'Male', value: 'male' },
     {id:2,  label: 'Female', value: 'female' },
@@ -177,12 +180,8 @@ const InvestigationForm = ({ route }) => {
     }));
   };
 
-   // Main submit handler
-  const handleSubmit = async () => {
-    // Validation logic here
-    try {
-    setIsSubmitting(true);
-
+  const generatePayload= async()=>{
+      const date = new Date().toISOString();
       const audioData = formData.audioUri
         ? await readAudioFileAsBase64(formData.audioUri)
         : null;
@@ -195,13 +194,45 @@ const InvestigationForm = ({ route }) => {
         latitude: formData.latitude || 0.1,
         longitude: formData.longitude || 0.1,
         status: 'PENDING',
-        createdAt: new Date().toISOString()
+        createdAt: reportKey || date,
+        updatedAt: date,
       };
+      return reportPayload;
+  }
+
+  
+  // Add a new function to handle updating offline reports
+  const updateOfflineReport = async () => {
+    try {
+      setIsUpdating(true);
+      // Ensure latitude, longitude, and images are updated
+      const updatedPayload = await generatePayload();
+      console.log('Generated report payload:', updatedPayload);
+      await saveReportOffline(updatedPayload, true); // Assuming saveReportOffline can handle updates with a flag
+      Alert.alert('Success', 'Report updated offline successfully.');
+    } catch (error) {
+      console.error('Error updating offline report:', error);
+      Alert.alert('Error', 'Failed to update the offline report.');
+    }
+     setIsUpdating(false);
+  };
+
+
+   // Main submit handler
+  const handleSubmit = async () => {
+    try {
+    setIsSubmitting(true);
+      const reportPayload = await generatePayload();
+      console.log('Generated report payload:', reportPayload);
        const netInfo = await NetInfo.fetch();
       if (!netInfo.isConnected  && !netInfo.isInternetReachable) {
-        // 🛑 No internet, save the report offline immediately
-        Alert.alert('No Internet', 'Saving report offline for later submission.');
-        await saveReportOffline(reportPayload);
+        if (reportKey) {
+          // Update existing offline report
+          await saveReportOffline(reportPayload,true);
+        } else {
+          Alert.alert('No Internet', 'Saving report offline for later submission.');
+          await saveReportOffline(reportPayload);
+        }
         NavigationService.navigate('Confirmation');
         return;
       } else {
@@ -209,6 +240,9 @@ const InvestigationForm = ({ route }) => {
           console.log('Submitting report:', reportPayload);
           const response = await submitAccidentReport(reportPayload);
           if (response.id) {
+            if(reportKey){
+                await removeOfflineReport(reportPayload);
+            }
             NavigationService.navigate('Confirmation');
           } else {
             Alert.alert('Error', `Submission failed: ${response.error}`);
@@ -216,7 +250,11 @@ const InvestigationForm = ({ route }) => {
         } catch (error) {
           console.error('Submission error:', error);
           Alert.alert('Error', 'Failed to submit the report. Saving offline...');
-          await saveReportOffline(reportPayload);
+          if (reportKey) {
+            await saveReportOffline(reportPayload,true);
+          } else {
+            await saveReportOffline(reportPayload);
+          }
            NavigationService.navigate('Confirmation');
         }
       }
@@ -234,7 +272,6 @@ const InvestigationForm = ({ route }) => {
       dispatch(fetchAllLovs()).unwrap().catch(console.error);
     }
   }, [accidentTypes, weatherConditions, dispatch]);
-
   return (
 
     <View className="flex-1 bg-white">
@@ -255,6 +292,7 @@ const InvestigationForm = ({ route }) => {
 
         <MapComponent 
         location={mapLocation} 
+        editable={editable}
         setLocation={(region) => {
           setMapLocation(region);
           inputHandling('latitude', region.latitude);
@@ -327,7 +365,7 @@ const InvestigationForm = ({ route }) => {
           value={formData.gender}
             disabled={!editable}
           onItemSelect={(value) => {
-            inputHandling('gender', value.label)}}
+            inputHandling('gender', value.id)}}
         />
        
          {/* Environmental Factors */}
@@ -663,6 +701,15 @@ const InvestigationForm = ({ route }) => {
 
         <CustomButton onPress={handleSubmit} title="SUBMIT"  disabled={isSubmitting}
         loading={isSubmitting}/>
+
+        {isUpdateData && (
+          <CustomButton
+            onPress={() => updateOfflineReport()}
+            title="Update Report"
+             disabled={!isUpdateData || isUpdating}
+              loading={isUpdating}
+          />
+        )}
       </ScrollView>
     </View>
 

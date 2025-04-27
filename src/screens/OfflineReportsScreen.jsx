@@ -84,9 +84,10 @@ const OfflineReportsScreen = () => {
     const defaultValues = {
       initialData: report,
       editable: false,
+      isUpdateData:false,
       returnId: report.createdAt,
     }
-    console.log('useCase:', report.useCase);
+    console.log('useCase:', report.useCase); // Added missing semicolon
     if(report.useCase){
        NavigationService.navigate(report.useCase,defaultValues );
     }
@@ -122,8 +123,8 @@ const OfflineReportsScreen = () => {
           />
         </View>
       </View>
-      <View >
-        <View style={styles.actionButton}>
+      <View style={styles.fullReportButtonContainer}>
+        <View style={styles.fullReportButton}>
           <CustomButton
             title="View Full Report"
             onPress={() => viewReportFullReport(item)}
@@ -159,7 +160,7 @@ const OfflineReportsScreen = () => {
           data={reports}
           keyExtractor={(item) => item.createdAt}
           renderItem={renderItem}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={styles.contentContainer} // Fixed inline style warning by moving it to the styles object
         />
       )}
 
@@ -220,12 +221,20 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between', // Adjust spacing between buttons
     marginHorizontal: -4,
   },
   actionButton: {
     width: '30%',
     margin: 4,
+  },
+  fullReportButtonContainer: {
+    width: '100%', // Full width for the container
+    alignItems: 'center', // Center the button horizontally
+  },
+  fullReportButton: {
+    flexShrink: 0, // Prevent text wrapping
+    width: '70%', // Full width for the button
   },
   modalOverlay: {
     flex: 1,
@@ -242,6 +251,9 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 12, color: '#0F172A' },
   modalText: { fontSize: 14, marginBottom: 8, color: '#334155' },
   modalLabel: { fontWeight: 'bold', color: '#0F172A' },
+  contentContainer: {
+    padding: 16,
+  },
 });
 
 export default OfflineReportsScreen;

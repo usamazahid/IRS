@@ -23,22 +23,27 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchAllLovs } from '../redux/slices/dropdownSlice'; // Import the action
 import { hasRequiredPermissions } from '../utils/permissionUtils';
 import NetInfo from '@react-native-community/netinfo';
-import { saveReportOffline } from '../services/OfflineService';
+import { saveReportOffline,removeOfflineReport } from '../services/OfflineService';
 import MultipleCameraComponent from './components/MulitpleCameraComponent';
 import SimpleDropDownMenu from './components/SimpleDropDownMenu';
+// import axios from 'axios'; // Import axios for API requests
+
 const ReportAccident = ({route}) => {
   const { user, role, permissions } = useSelector((state) => state.auth);
-  const { initialData = null, editable: editableFlag = true } = route.params || {};
+  const { initialData = null, editable: editableFlag = true,isUpdateData: isUpdateDataFlag = false } = route.params || {};
   const editable = Boolean(editableFlag);
+  const isUpdateData = Boolean(isUpdateDataFlag);
   const ACCIDENT_TYPES_URL = `${API_BASE_URL}/irs/getAccidentTypes`;
   const PATIENT_VICTIM_URL = `${API_BASE_URL}/irs/getPatientVictim`;
   const VECHILE_INVOLVED_URL = `${API_BASE_URL}/irs/getVehicleInvolved`;
   // const DATA_URL = 'https://raw.githubusercontent.com/usamazahid/IRS/main/accident_types.json';
   // Add state for submission status
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [capturedImages, setCapturedImages] = useState([]);
   const dispatch = useDispatch();
   const [mapLocation,setMapLocation]=useState(null);
+  const [reportKey,setReportKey]=useState(null);
   // Access dropdown data, error, and loading state from Redux
   const {accidentTypes,
   patientVictim,
@@ -114,8 +119,29 @@ useEffect(() => {
       setMapLocation({ latitude: initialData.latitude, longitude: initialData.longitude });
     }
     setCapturedImages(initialData.imageUris || []);
+    setReportKey(initialData.createdAt);
   }
 }, [initialData]);
+
+ const generatePayload= async()=>{
+      const date = new Date().toISOString();
+      const audioData = formData.audioUri
+        ? await readAudioFileAsBase64(formData.audioUri)
+        : null;
+      const imageData=formData.imageUri ? (await compressImage(formData.imageUri)):null;
+      formData.imageData=imageData;
+      formData.audioData=audioData;
+      formData.imageDTOs =await fillImageDto(capturedImages);
+      const reportPayload = {
+        ...formData,
+        latitude: formData.latitude || 0.1,
+        longitude: formData.longitude || 0.1,
+        status: 'PENDING',
+        createdAt: reportKey || date,
+        updatedAt: date,
+      };
+      return reportPayload;
+  }
 
   const genderData = [
     {id:1,  label: 'Male', value: 'male' },
@@ -137,56 +163,70 @@ const handleImageCapture = (uris) => {
       [fieldName]: data,
     }));
   };
-   // Main submit handler
-   const handleSubmit = async () => {
-    // Validation logic here
-    try {
-    setIsSubmitting(true);
 
-      const audioData = formData.audioUri
-        ? await readAudioFileAsBase64(formData.audioUri)
-        : null;
-      const imageData=formData.imageUri ? (await compressImage(formData.imageUri)):null;
-      formData.imageData=imageData;
-      formData.audioData=audioData;
-      formData.imageDTOs =await fillImageDto(capturedImages);
-      const reportPayload = {
-        ...formData,
-        latitude: formData.latitude || 0.1,
-        longitude: formData.longitude || 0.1,
-        status: 'PENDING',
-        createdAt: new Date().toISOString()
-      };
-       const netInfo = await NetInfo.fetch();
-      if (!netInfo.isConnected  && !netInfo.isInternetReachable) {
-        // 🛑 No internet, save the report offline immediately
-        Alert.alert('No Internet', 'Saving report offline for later submission.');
-        await saveReportOffline(reportPayload);
-        NavigationService.navigate('Confirmation');
-        return;
-      } else {
-        try {
-          console.log('Submitting report:', reportPayload);
-          const response = await submitAccidentReport(reportPayload);
-          if (response.id) {
-            NavigationService.navigate('Confirmation');
+
+   // Add a new function to handle updating offline reports
+   const updateOfflineReport = async () => {
+     try {
+       setIsUpdating(true);
+       // Ensure latitude, longitude, and images are updated
+       const updatedPayload = await generatePayload();
+       console.log('Generated report payload:', updatedPayload);
+       await saveReportOffline(updatedPayload, true); // Assuming saveReportOffline can handle updates with a flag
+       Alert.alert('Success', 'Report updated offline successfully.');
+      
+     } catch (error) {
+       console.error('Error updating offline report:', error);
+       Alert.alert('Error', 'Failed to update the offline report.');
+     }
+      setIsUpdating(false);
+   };
+  const handleSubmit = async () => {
+      try {
+      setIsSubmitting(true);
+        const reportPayload = await generatePayload();
+        console.log('Generated report payload:', reportPayload);
+         const netInfo = await NetInfo.fetch();
+        if (!netInfo.isConnected  && !netInfo.isInternetReachable) {
+          if (reportKey) {
+            // Update existing offline report
+            await saveReportOffline(reportPayload,true);
           } else {
-            Alert.alert('Error', `Submission failed: ${response.error}`);
+            Alert.alert('No Internet', 'Saving report offline for later submission.');
+            await saveReportOffline(reportPayload);
           }
-        } catch (error) {
-          console.error('Submission error:', error);
-          Alert.alert('Error', 'Failed to submit the report. Saving offline...');
-          await saveReportOffline(reportPayload);
-           NavigationService.navigate('Confirmation');
+          NavigationService.navigate('Confirmation');
+          return;
+        } else {
+          try {
+            console.log('Submitting report:', reportPayload);
+            const response = await submitAccidentReport(reportPayload);
+            if (response.id) {
+              if(reportKey){
+                await removeOfflineReport(reportPayload);
+              }
+              NavigationService.navigate('Confirmation');
+            } else {
+              Alert.alert('Error', `Submission failed: ${response.error}`);
+            }
+          } catch (error) {
+            console.error('Submission error:', error);
+            Alert.alert('Error', 'Failed to submit the report. Saving offline...');
+            if (reportKey) {
+              await saveReportOffline(reportPayload,true);
+            } else {
+              await saveReportOffline(reportPayload);
+            }
+             NavigationService.navigate('Confirmation');
+          }
         }
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Submission failed');
-      console.error(error);
-    }finally {
-    setIsSubmitting(false);
-  }
-  };
+      } catch (error) {
+        Alert.alert('Error', 'Submission failed');
+        console.error(error);
+      }finally {
+      setIsSubmitting(false);
+    }
+    };
 
   useEffect(() => { 
     if (!accidentTypes || accidentTypes.length === 0) {
@@ -194,6 +234,31 @@ const handleImageCapture = (uris) => {
                   .unwrap().then(() => {});
     }
   }, [  accidentTypes,dispatch]);
+
+  // const fetchNearestLandmark = async (latitude, longitude) => {
+  //   try {
+  //     const API_KEY = 'AIzaSyADg1wRdGV8WdyGKg1V3IXgv3Ax0kRAIGI'; // Replace with your actual Google API key
+  //     const response = await axios.get(
+  //       `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${API_KEY}`
+  //     );
+
+  //     if (response.data && response.data.results && response.data.results.length > 0) {
+  //       const address = response.data.results[0].formatted_address;
+  //       inputHandling('nearestLandMark', address); // Update the nearestLandMark field
+  //     } else {
+  //       Alert.alert('Error', 'Unable to fetch the nearest landmark.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching nearest landmark:', error);
+  //     Alert.alert('Error', 'Failed to fetch the nearest landmark.');
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (mapLocation?.latitude && mapLocation?.longitude) {
+  //     fetchNearestLandmark(mapLocation.latitude, mapLocation.longitude);
+  //   }
+  // }, [mapLocation]); // Trigger when mapLocation changes
   
   return (
 
@@ -214,15 +279,29 @@ const handleImageCapture = (uris) => {
         </Text>
 
         <MapComponent 
-        location={mapLocation} 
+        location={mapLocation}
+        editable={editable}
         setLocation={(region) => {
           setMapLocation(region);
           inputHandling('latitude', region.latitude);
           inputHandling('longitude', region.longitude);
+          // fetchNearestLandmark(region.latitude, region.longitude); // Fetch landmark on location change
         }}
       />
 
-
+      {/* <View style={{ marginVertical: 10 }}>
+        <CustomButton
+          title="Confirm Location"
+          onPress={() => {
+            Alert.alert(
+              'Location Confirmed',
+              `Latitude: ${mapLocation?.latitude}, Longitude: ${mapLocation?.longitude}`
+            );
+          }}
+          color="blue"
+          textColor="white"
+        />
+      </View> */}
 
           <TextBox label="Nearest LandMark" editable={editable} onChangeText={(text) => inputHandling('nearestLandMark', text)} value={formData.nearestLandMark}/>
 
@@ -260,7 +339,7 @@ const handleImageCapture = (uris) => {
           value={formData.gender}
             disabled={!editable}
           onItemSelect={(value) => {
-            inputHandling('gender', value.label)}}
+            inputHandling('gender', value.id)}}
         />
        
           <GenericDropDownMenu className="bg-slate-200"
@@ -314,12 +393,12 @@ const handleImageCapture = (uris) => {
 
       {/* <CameraComponent onCapture={(uri) => inputHandling('imageUri', uri)} editable={true}  />  */}
       {/* <CameraComponent initialUri={savedUri} editable={false} /> */}
-      <MultipleCameraComponent 
-        onCapture={handleImageCapture} 
-        editable={editable}
-        initialUris={[]}
-        maxPhotos = {2}
-      />
+       <MultipleCameraComponent 
+              onCapture={handleImageCapture} 
+              editable={editable}
+              initialUris={formData.imageUris}
+              maxPhotos = {2}
+            />
         {/* Recorder with a 1-minute time limit */}
       <AudioRecorder expiryTime={60000} onRecordingComplete={(path)=>inputHandling('audioUri', path)} disabled={!editable}/>
 
@@ -330,6 +409,15 @@ const handleImageCapture = (uris) => {
         </>) : null}
          <CustomButton onPress={handleSubmit} title="SUBMIT"  disabled={isSubmitting}
         loading={isSubmitting}/>
+        
+        {isUpdateData && (
+          <CustomButton
+            onPress={() => updateOfflineReport()}
+            title="Update Report"
+            disabled={!isUpdateData || isUpdating}
+            loading={isUpdating}
+          />
+        )}
       </ScrollView>
     </View>
 

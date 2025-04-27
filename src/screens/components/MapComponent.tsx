@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Platform, StyleProp, ViewStyle } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, Platform, StyleProp, ViewStyle, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
-
+import { ArrowPathIcon } from 'react-native-heroicons/outline'; 
 interface MapComponentProps {
   location: Region | null;
   setLocation: (location: Region) => void;
@@ -11,9 +11,22 @@ interface MapComponentProps {
   style?: StyleProp<ViewStyle>;
 }
 
+const validateRegion = (region: Region | null): boolean => {
+  return (
+    region !== null &&
+    typeof region.latitude === 'number' &&
+    typeof region.longitude === 'number' &&
+    typeof region.latitudeDelta === 'number' &&
+    typeof region.longitudeDelta === 'number'
+  );
+};
+
 const MapComponent: React.FC<MapComponentProps> = ({ location, setLocation, editable = true, style }) => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true); // Track loading state 
+  const [isDragging, setIsDragging] = useState(false);
+  const mapRef = useRef<MapView>(null); // Reference to the MapView
+
   useEffect(() => {
     const getLocation = async () => {
       const permission = Platform.select({
@@ -56,14 +69,19 @@ const MapComponent: React.FC<MapComponentProps> = ({ location, setLocation, edit
     }
   }, [location]); // Trigger the effect if location changes
   
-  
-  const [isDragging, setIsDragging] = useState(false);
-
 const handleLocation = (region: Region) => {
-  if (!isDragging && editable) {
+  if (!isDragging && editable && validateRegion(region)) {
     setLocation(region);
   }
 };
+
+const handleReturnToLocation = () => {
+  if (validateRegion(location)) {
+    setLocation(location);
+    mapRef.current?.animateToRegion(location, 1000); // Animate the map to the set location
+  }
+};
+
   return (
     <View style={[styles.container, style]}>
       {loading ? (
@@ -74,19 +92,27 @@ const handleLocation = (region: Region) => {
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{errorMsg}</Text>
         </View>
-      ) : location ? (
-        <MapView
-          style={styles.map}
-          region={location} // Use region prop for real-time updates
-          showsUserLocation={editable}
-          onRegionChange={() => setIsDragging(true)} // Triggered during map dragging
-          onRegionChangeComplete={(region) => {
-            setIsDragging(false); // Dragging stopped
-            handleLocation(region); // Handle the final region change
-          }}
-        >
-          <Marker coordinate={location} />
-        </MapView>
+      ) : validateRegion(location) ? (
+        <>
+          <MapView
+            ref={mapRef} // Attach the ref to the MapView
+            style={styles.map}
+            region={location} // Use region prop for real-time updates
+            showsUserLocation={editable}
+            onRegionChange={() => setIsDragging(true)} // Triggered during map dragging
+            onRegionChangeComplete={(region) => {
+              setIsDragging(false); // Dragging stopped
+              handleLocation(region); // Handle the final region change
+            }}
+          >
+            <Marker coordinate={location} />
+          </MapView>
+          {!editable && (
+            <TouchableOpacity style={styles.returnButton} onPress={handleReturnToLocation}>
+              <ArrowPathIcon size={24} color="white" />
+            </TouchableOpacity>
+          )}
+        </>
       ) : (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Unable to load map, location is invalid.</Text>
@@ -117,6 +143,16 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: 'green',
+  },
+  returnButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'blue',
+    borderRadius: 50,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

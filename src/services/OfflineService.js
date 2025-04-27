@@ -6,12 +6,31 @@ import NetInfo from '@react-native-community/netinfo';
 const OFFLINE_QUEUE_KEY = '@offline_reports';
 const MAX_RETRIES = 3;
 
-export const saveReportOffline = async reportData => {
+export const saveReportOffline = async (reportData, isUpdate = false) => {
   try {
     const existingReports = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
     const reports = existingReports ? JSON.parse(existingReports) : [];
 
-    // Add initial retries count
+    if (isUpdate) {
+      // Find the index of the report to update
+      const reportIndex = reports.findIndex(
+        (report) => report.id === reportData.id || report.createdAt === reportData.createdAt
+      );
+
+      if (reportIndex !== -1) {
+        // Update the existing report
+        reports[reportIndex] = {
+          ...reports[reportIndex],
+          ...reportData,
+          retries: reports[reportIndex].retries, // Preserve retries count
+        };
+        await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(reports));
+        console.log('Report updated for offline submission');
+        return;
+      }
+    }
+
+    // Add new report if not updating
     reports.push({
       ...reportData,
       retries: 0,
@@ -31,6 +50,23 @@ export const getOfflineReports = async () => {
 
 export const clearOfflineReports = async () => {
   await AsyncStorage.removeItem(OFFLINE_QUEUE_KEY);
+};
+
+export const removeOfflineReport = async (reportData) => {
+  try {
+    const existingReports = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
+    const reports = existingReports ? JSON.parse(existingReports) : [];
+
+    // Filter out the report with the same `createdAt` or matching fields
+    const updatedReports = reports.filter(
+      (report) => report.createdAt !== reportData.createdAt
+    );
+
+    await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(updatedReports));
+    console.log(`Report with createdAt ${reportData.createdAt} removed from offline storage.`);
+  } catch (error) {
+    console.error('Error removing offline report:', error);
+  }
 };
 
 // Enhanced sync function with retries
