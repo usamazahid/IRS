@@ -1,6 +1,5 @@
 import axios from 'axios';
 import {API_BASE_URL} from '@env';
-
 const apiURL = API_BASE_URL;
 
 export const submitAccidentReport = async (reportData: any) => {
@@ -29,10 +28,10 @@ export const submitAccidentReport = async (reportData: any) => {
   }
 };
 
-export const getReportData = async (userId: string) => {
+export const getReportData = async (userId: string,pageNumber: number,recordsPerPage: number) => {
   try {
     // Construct the URL with query parameters
-    const path = `${apiURL}/irs/getJoinedReportByUserId/${userId}`;
+    const path = `${apiURL}/irs/getJoinedReportByUserId/${userId}?pageNumber=${pageNumber}&recordsPerPage=${recordsPerPage}`;
     
     // Send GET request to the API
     const response = await axios.get(path, {
@@ -40,7 +39,7 @@ export const getReportData = async (userId: string) => {
         Accept: 'application/json',
       },
     });
-
+    console.log('Response length:', response.data.reports.length);
     // Return the response data
     return response.data;
   } catch (error: any) {
@@ -85,3 +84,34 @@ export const getHeatMapData = async (range: string) => {
     throw error;
   }
 };
+
+export const getClusteringData = async (range: string) => {
+  try {
+    // Construct the API URL
+    const path = `${apiURL}/irs/getClusteredAccidentsDBSCAN/${range}`;
+
+    // Send GET request to the API
+    const response = await axios.get(path, {
+      headers: { Accept: 'application/json' },
+      timeout: 10000, // Timeout after 10 seconds
+    });
+
+    return response.data; // Return response data
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        console.error('Response Error:', error.response.data);
+        console.error('Status Code:', error.response.status);
+        console.error('Headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('Request Error:', error.request);
+      }
+    } else {
+      console.error('Error:', error.message);
+    }
+    throw error;
+  }
+};
+
+
+

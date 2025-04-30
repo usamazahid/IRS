@@ -280,19 +280,22 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   zoomButton: {
-    backgroundColor: '#fff',
-    padding: 10,
+    backgroundColor: '#007AFF', // Blue background for better visibility
+    padding: 15, // Increased padding
     marginVertical: 5,
-    borderRadius: 5,
-    elevation: 3, // for Android shadow
-    shadowColor: '#000', // for iOS shadow
+    borderRadius: 50, // Circular buttons
+    elevation: 3, // Android shadow
+    shadowColor: '#000', // iOS shadow
     shadowOpacity: 0.3,
     shadowRadius: 3,
     shadowOffset: { width: 0, height: 2 },
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   zoomButtonText: {
-    fontSize: 20,
+    fontSize: 24, // Larger font size
     fontWeight: 'bold',
+    color: '#fff', // White text for contrast
   },
     retryButton: {
     backgroundColor: '#fff',

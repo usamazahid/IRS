@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, Modal, ScrollView ,StyleSheet} from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, TextInput, FlatList, Modal, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeftIcon } from 'react-native-heroicons/solid';
 import NavigationService from '../context/NavigationService';
@@ -7,9 +7,10 @@ import TopBar from './components/TopBarComponent';
 import { useSelector } from 'react-redux';
 import { getReportData } from '../services/accidentService';
 
+const recordsPerPage = 10;
+
 const HistoryScreen = () => {
   const { user } = useSelector((state) => state.auth);
-
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState([]);
   const [reportData, setReportData] = useState([]);
@@ -17,37 +18,46 @@ const HistoryScreen = () => {
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Fetch report data
-  useEffect(() => {
-    const fetchReport = async () => {
-      try {
-        const data = await getReportData(user.id);
-        setReportData(data); // Store fetched data
-        setFilteredData(data); // Initialize the filtered data
-      } catch (err) {
-        setError('Failed to fetch report data');
-      } finally {
-        setLoading(false);
+  const fetchReport = useCallback(async (pageNumber = 1) => {
+    try {
+      setLoading(true);
+      const data = await getReportData(user.id, pageNumber, recordsPerPage);
+      
+      if (pageNumber === 1) {
+        setReportData(data.reports);
+      } else {
+        setReportData((prev) => [...prev, ...data.reports]);
       }
-    };
-
-    fetchReport();
+      setHasMore(data.hasMore);
+    } catch (err) {
+      setError('Failed to fetch report data');
+      console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [user.id]);
 
-  const handleSearch = (query) => {
-    setSearchQuery(query);
+  useEffect(() => {
+    fetchReport();
+  }, [fetchReport]);
 
-    if (query) {
-      const filtered = reportData.filter(
-        (item) =>
-          item.accidentTypeLabel &&
-          item.accidentTypeLabel.toLowerCase().includes(query.toLowerCase())
+  // Update filtered data whenever reportData or search query changes
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = reportData.filter(item =>
+        item.accidentTypeLabel?.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredData(filtered);
     } else {
-      setFilteredData(reportData); // Reset to full list if query is empty
+      setFilteredData(reportData);
     }
+  }, [reportData, searchQuery]);
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
   };
 
   const handleItemPress = (item) => {
@@ -68,7 +78,17 @@ const HistoryScreen = () => {
     </TouchableOpacity>
   );
 
-  if (loading) {
+  const loadMoreData = () => {
+    if (!loading && hasMore) {
+      setPage(prevPage => {
+        const nextPage = prevPage + 1;
+        fetchReport(nextPage);
+        return nextPage;
+      });
+    }
+  };
+
+  if (loading && page === 1) {
     return (
       <SafeAreaView className="flex-1 bg-slate-200">
         <Text className="text-center mt-4 text-gray-500">Loading...</Text>
@@ -102,69 +122,71 @@ const HistoryScreen = () => {
           onChangeText={handleSearch}
         />
 
-        {/* List of Panels */}
         <FlatList
           contentContainerStyle={{ paddingHorizontal: 16 }}
           data={filteredData}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
           renderItem={renderPanel}
           ListEmptyComponent={
             <Text className="text-center mt-4 text-gray-500">No results found</Text>
           }
+          onEndReached={loadMoreData}
+          onEndReachedThreshold={0.1}  // More sensitive trigger point
+          removeClippedSubviews={true} // Optimize memory usage
+          ListFooterComponent={
+            loading ? <Text className="text-center mt-4 text-gray-500">Loading more...</Text> : null
+          }
         />
 
-        {/* Modal for Details */}
-        {/* Transparent Modal */}
         {selectedItem && (
-        <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <ScrollView>
-              <Text style={styles.modalTitle}>Details</Text>
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Accident Type:</Text> {selectedItem.accidentTypeLabel}
-              </Text>
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Description:</Text> {selectedItem.accidentTypeDescription}
-              </Text>
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Location:</Text> {selectedItem.location}
-              </Text>
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Status:</Text> {selectedItem.status}
-              </Text>
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Reported By:</Text> {selectedItem.reportedBy}
-              </Text>
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Created At:</Text> {selectedItem.createdAt}
-              </Text>
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <ScrollView>
+                  <Text style={styles.modalTitle}>Details</Text>
+                  <Text style={styles.modalText}>
+                    <Text style={styles.modalLabel}>Accident Type:</Text> {selectedItem.accidentTypeLabel}
+                  </Text>
+                  <Text style={styles.modalText}>
+                    <Text style={styles.modalLabel}>Description:</Text> {selectedItem.accidentTypeDescription}
+                  </Text>
+                  <Text style={styles.modalText}>
+                    <Text style={styles.modalLabel}>Location:</Text> {selectedItem.location}
+                  </Text>
+                  <Text style={styles.modalText}>
+                    <Text style={styles.modalLabel}>Status:</Text> {selectedItem.status}
+                  </Text>
+                  <Text style={styles.modalText}>
+                    <Text style={styles.modalLabel}>Reported By:</Text> {selectedItem.reportedBy}
+                  </Text>
+                  <Text style={styles.modalText}>
+                    <Text style={styles.modalLabel}>Created At:</Text> {selectedItem.createdAt}
+                  </Text>
+                </ScrollView>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         )}
       </View>
     </SafeAreaView>
   );
 };
 
-
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Transparent black background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -206,4 +228,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
 export default HistoryScreen;
