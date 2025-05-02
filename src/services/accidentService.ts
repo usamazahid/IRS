@@ -57,17 +57,17 @@ export const getReportData = async (userId: string,pageNumber: number,recordsPer
 };
 
 
-export const getHeatMapData = async (range: string) => {
+export const getHeatMapData = async (limit: string) => {
   try {
-    // Construct the API URL
-    const path = `${apiURL}/irs/heatmap/${range}`;
+    // Construct the API URL with limit query parameter
+    const path = `${apiURL}/irs/heatmap?limit=${limit}`;
 
     // Send GET request to the API
     const response = await axios.get(path, {
       headers: { Accept: 'application/json' },
       timeout: 10000, // Timeout after 10 seconds
     });
-
+    console.log('Heatmap data:', response.data.length);
     return response.data; // Return response data
   } catch (error: any) {
     if (axios.isAxiosError(error)) {
@@ -85,17 +85,17 @@ export const getHeatMapData = async (range: string) => {
   }
 };
 
-export const getClusteringData = async (range: string) => {
+export const getClusteringData = async (limit: string) => {
   try {
-    // Construct the API URL
-    const path = `${apiURL}/irs/getClusteredAccidentsDBSCAN/${range}`;
+    // Construct the API URL with limit query parameter
+    const path = `${apiURL}/irs/getClusteredAccidentsDBSCAN?limit=${limit}`;
 
     // Send GET request to the API
     const response = await axios.get(path, {
       headers: { Accept: 'application/json' },
       timeout: 10000, // Timeout after 10 seconds
     });
-
+    console.log('Clustering data:', response.data.length);
     return response.data; // Return response data
   } catch (error: any) {
     if (axios.isAxiosError(error)) {

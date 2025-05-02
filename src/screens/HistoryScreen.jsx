@@ -7,7 +7,7 @@ import TopBar from './components/TopBarComponent';
 import { useSelector } from 'react-redux';
 import { getReportData } from '../services/accidentService';
 
-const recordsPerPage = 10;
+const recordsPerPage = 20;
 
 const HistoryScreen = () => {
   const { user } = useSelector((state) => state.auth);
@@ -20,25 +20,42 @@ const HistoryScreen = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const fetchReport = useCallback(async (pageNumber = 1) => {
     try {
-      setLoading(true);
+      if (pageNumber === 1) {
+        setLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+      
       const data = await getReportData(user.id, pageNumber, recordsPerPage);
       
       if (pageNumber === 1) {
         setReportData(data.reports);
       } else {
-        setReportData((prev) => [...prev, ...data.reports]);
+        setReportData(prevData => [...prevData, ...data.reports]);
       }
-      setHasMore(data.hasMore);
+      
+      // Update hasMore based on whether we received any data
+      setHasMore(data.reports && data.reports.length === recordsPerPage);
     } catch (err) {
       setError('Failed to fetch report data');
       console.error('Fetch error:', err);
     } finally {
       setLoading(false);
+      setIsLoadingMore(false);
     }
   }, [user.id]);
+
+  const loadMoreData = () => {
+    if (!isLoadingMore && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchReport(nextPage);
+    }
+  };
 
   useEffect(() => {
     fetchReport();
@@ -77,16 +94,6 @@ const HistoryScreen = () => {
       </Text>
     </TouchableOpacity>
   );
-
-  const loadMoreData = () => {
-    if (!loading && hasMore) {
-      setPage(prevPage => {
-        const nextPage = prevPage + 1;
-        fetchReport(nextPage);
-        return nextPage;
-      });
-    }
-  };
 
   if (loading && page === 1) {
     return (
@@ -131,10 +138,10 @@ const HistoryScreen = () => {
             <Text className="text-center mt-4 text-gray-500">No results found</Text>
           }
           onEndReached={loadMoreData}
-          onEndReachedThreshold={0.1}  // More sensitive trigger point
-          removeClippedSubviews={true} // Optimize memory usage
+          onEndReachedThreshold={0.5}
+          removeClippedSubviews={true}
           ListFooterComponent={
-            loading ? <Text className="text-center mt-4 text-gray-500">Loading more...</Text> : null
+            isLoadingMore ? <Text className="text-center mt-4 text-gray-500">Loading more...</Text> : null
           }
         />
 

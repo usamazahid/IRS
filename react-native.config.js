@@ -1,9 +1,11 @@
+// react-native.config.js
 module.exports = {
+  project: {
     android: {
-      packageName: 'com.irs', // Replace with your actual package name
+      packageName: 'com.irs',   // ← exactly your applicationId
     },
-    dependencies: {
-      // List any specific dependencies or manual linking configurations here
-    },
-  };
-  
+  },
+  dependencies: {
+    // any manual links if you need them
+  },
+};

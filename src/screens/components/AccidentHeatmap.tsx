@@ -22,7 +22,7 @@ interface AccidentData {
 }
 
 interface AccidentHeatmapProps {
-  range?: string;
+  limit?: string;
 }
 
 const DEFAULT_REGION = {
@@ -42,7 +42,7 @@ const HEATMAP_CONFIG = {
   },
 };
 
-const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({ range = '1y' }) => {
+const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({ limit = '100' }) => {
   const [accidentData, setAccidentData] = useState<AccidentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,7 +53,7 @@ const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({ range = '1y' }) => {
   const fetchHeatmapData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getHeatMapData(range);
+      const data = await getHeatMapData(limit);
       setAccidentData(data);
       console.log('refreshed');
       setError('');
@@ -63,7 +63,7 @@ const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({ range = '1y' }) => {
     } finally {
       setLoading(false);
     }
-  }, [range]);
+  }, [limit]);
 
     // Request location permission
   const requestLocationPermission = useCallback(async () => {
@@ -136,9 +136,12 @@ const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({ range = '1y' }) => {
     const handleZoomIn = () => {
       if (mapRef.current) {
         mapRef.current.getCamera().then(camera => {
-          if (camera.zoom < 20) {  // Max zoom level
-            camera.zoom += 1;
-            mapRef.current?.animateCamera(camera, { duration: 300 });
+          if (camera.zoom && camera.zoom < 20) {  // Max zoom level
+            const newCamera = {
+              ...camera,
+              zoom: camera.zoom + 1
+            };
+            mapRef.current?.animateCamera(newCamera, { duration: 300 });
           }
         });
       }
@@ -147,9 +150,12 @@ const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({ range = '1y' }) => {
     const handleZoomOut = () => {
       if (mapRef.current) {
         mapRef.current.getCamera().then(camera => {
-          if (camera.zoom > 3) {  // Min zoom level
-            camera.zoom -= 1;
-            mapRef.current?.animateCamera(camera, { duration: 300 });
+          if (camera.zoom && camera.zoom > 3) {  // Min zoom level
+            const newCamera = {
+              ...camera,
+              zoom: camera.zoom - 1
+            };
+            mapRef.current?.animateCamera(newCamera, { duration: 300 });
           }
         });
       }

@@ -41,7 +41,7 @@ const ReportScreen = () => {
         </View>
 
         {/* Render Heatmap or Clustering based on toggle state */}
-        {isHeatmap ? <AccidentHeatmap range="6m" /> : <AccidentClustering />}
+        {isHeatmap ? <AccidentHeatmap limit="100" /> : <AccidentClustering limit="100" />}
 
         <CustomButton
           onPress={() => NavigationService.navigate('Home')}

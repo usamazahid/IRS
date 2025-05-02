@@ -6,10 +6,10 @@ import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import Geolocation from '@react-native-community/geolocation';
 
 interface ClusterPoint {
-  severity: number;
   latitude: number;
   longitude: number;
-  id: string;
+  id?: string;
+  severity?: number;
 }
 
 interface ClusterData {
@@ -18,6 +18,8 @@ interface ClusterData {
     longitude: number;
   };
   points: ClusterPoint[];
+  pointsLength: number;
+  isBlackSpot: boolean;
 }
 
 const DEFAULT_REGION = {
@@ -28,10 +30,10 @@ const DEFAULT_REGION = {
 };
 
 interface AccidentClusteringProps {
-    range?: string;
-  }
+  limit?: string;
+}
 
-const AccidentClustering: React.FC<AccidentClusteringProps> = ({ range = '1y' }) => {
+const AccidentClustering: React.FC<AccidentClusteringProps> = ({ limit = '100' }) => {
   const [clusterData, setClusterData] = useState<ClusterData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,7 +42,7 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ range = '1y' })
   const fetchClusteringData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getClusteringData(range);
+      const data = await getClusteringData(limit);
       setClusterData(data);
       setError('');
     } catch (err) {
@@ -49,13 +51,14 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ range = '1y' })
     } finally {
       setLoading(false);
     }
-  }, [range]);
+  }, [limit]);
 
   useEffect(() => {
     fetchClusteringData();
   }, [fetchClusteringData]);
 
-  const getSeverityColor = (severity: number) => {
+  const getSeverityColor = (severity?: number) => {
+    if (!severity) return '#808080'; // Gray for unknown severity
     if (severity <= 3) return '#00ff00'; // Green for low severity
     if (severity <= 6) return '#ffa500'; // Orange for medium severity
     return '#ff0000'; // Red for high severity
@@ -64,9 +67,12 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ range = '1y' })
   const handleZoomIn = () => {
     if (mapRef.current) {
       mapRef.current.getCamera().then(camera => {
-        if (camera.zoom < 20) { // Max zoom level
-          camera.zoom += 1;
-          mapRef.current?.animateCamera(camera, { duration: 300 });
+        if (camera.zoom && camera.zoom < 20) {
+          const newCamera = {
+            ...camera,
+            zoom: camera.zoom + 1
+          };
+          mapRef.current?.animateCamera(newCamera, { duration: 300 });
         }
       });
     }
@@ -75,9 +81,12 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ range = '1y' })
   const handleZoomOut = () => {
     if (mapRef.current) {
       mapRef.current.getCamera().then(camera => {
-        if (camera.zoom > 3) { // Min zoom level
-          camera.zoom -= 1;
-          mapRef.current?.animateCamera(camera, { duration: 300 });
+        if (camera.zoom && camera.zoom > 3) {
+          const newCamera = {
+            ...camera,
+            zoom: camera.zoom - 1
+          };
+          mapRef.current?.animateCamera(newCamera, { duration: 300 });
         }
       });
     }
@@ -146,30 +155,36 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ range = '1y' })
             maxZoomLevel={20}
             loadingEnabled={true}
           >
-            {clusterData.map((cluster, index) => (
-              <React.Fragment key={`cluster-${index}`}>
+            {clusterData.map((cluster, clusterIndex) => (
+              <React.Fragment key={`cluster-${clusterIndex}`}>
                 <Marker
-                  key={`center-${index}`}
                   coordinate={cluster.center}
-                  title={`Cluster Center`}
-                  description={`Accidents: ${cluster.points.length}`}
-                  pinColor="#0000ff"
-                />
-                {cluster.points.map(point => (
-                  <Marker
-                    key={`point-${point.id}`}
-                    coordinate={{ latitude: point.latitude, longitude: point.longitude }}
-                    title={`Accident ${point.id}`}
-                    description={`Severity: ${point.severity}`}
-                    pinColor={getSeverityColor(point.severity)}
-                  />
-                ))}
+                  title={`Cluster ${clusterIndex + 1}`}
+                  description={`${cluster.pointsLength} accidents`}
+                  pinColor={cluster.isBlackSpot ? "#FF0000" : "#0000FF"}
+                >
+                  <View style={styles.clusterMarker}>
+                    <Text style={styles.clusterText}>{cluster.pointsLength}</Text>
+                  </View>
+                </Marker>
+                {cluster.points.map((point, pointIndex) => {
+                  const uniqueKey = `point-${clusterIndex}-${point.latitude}-${point.longitude}-${point.id || pointIndex}`;
+                  return (
+                    <Marker
+                      key={uniqueKey}
+                      coordinate={{ latitude: point.latitude, longitude: point.longitude }}
+                      title={`Accident ${point.id || `Cluster ${clusterIndex + 1} - Point ${pointIndex + 1}`}`}
+                      description={point.severity ? `Severity: ${point.severity}` : 'Unknown severity'}
+                      pinColor={getSeverityColor(point.severity)}
+                      opacity={0.6}
+                    />
+                  );
+                })}
                 <Circle
-                  key={`circle-${index}`}
                   center={cluster.center}
                   radius={500}
-                  strokeColor="rgba(0,0,255,0.5)"
-                  fillColor="rgba(0,0,255,0.2)"
+                  strokeColor={cluster.isBlackSpot ? "rgba(255,0,0,0.5)" : "rgba(0,0,255,0.5)"}
+                  fillColor={cluster.isBlackSpot ? "rgba(255,0,0,0.2)" : "rgba(0,0,255,0.2)"}
                 />
               </React.Fragment>
             ))}
@@ -185,6 +200,29 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ range = '1y' })
             <TouchableOpacity style={styles.zoomButton} onPress={handleZoomOut}>
               <Text style={styles.zoomButtonText}>–</Text>
             </TouchableOpacity>
+          </View>
+
+          <View style={styles.legendContainer}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: '#FF0000' }]} />
+              <Text style={styles.legendText}>Black Spot</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: '#0000FF' }]} />
+              <Text style={styles.legendText}>Normal Cluster</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: '#00FF00' }]} />
+              <Text style={styles.legendText}>Low Severity</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: '#FFA500' }]} />
+              <Text style={styles.legendText}>Medium Severity</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: '#FF0000' }]} />
+              <Text style={styles.legendText}>High Severity</Text>
+            </View>
           </View>
         </>
       )}
@@ -267,6 +305,40 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 24,
+  },
+  clusterMarker: {
+    backgroundColor: 'white',
+    padding: 5,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#0000FF',
+  },
+  clusterText: {
+    fontWeight: 'bold',
+    color: '#0000FF',
+  },
+  legendContainer: {
+    position: 'absolute',
+    bottom: 100,
+    left: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 10,
+    borderRadius: 5,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 2,
+  },
+  legendColor: {
+    width: 20,
+    height: 20,
+    marginRight: 5,
+    borderRadius: 3,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#000000',
   },
 });
 
