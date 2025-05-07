@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, StyleSheet, Dimensions, ActivityIndicator, Text, TouchableOpacity, Platform } from 'react-native';
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
-import { getClusteringData } from '../../services/accidentService';
+import { getClusteringData, getFilteredClusteringData } from '../../services/accidentService';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import Geolocation from '@react-native-community/geolocation';
 
@@ -30,10 +30,16 @@ const DEFAULT_REGION = {
 };
 
 interface AccidentClusteringProps {
-  limit?: string;
+  limit?: number;
+  vehicleType?: string;
+  accidentType?: string;
 }
 
-const AccidentClustering: React.FC<AccidentClusteringProps> = ({ limit = '100' }) => {
+const AccidentClustering: React.FC<AccidentClusteringProps> = ({
+  limit = 100,
+  vehicleType,
+  accidentType,
+}) => {
   const [clusterData, setClusterData] = useState<ClusterData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,7 +48,7 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ limit = '100' }
   const fetchClusteringData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getClusteringData(limit);
+      const data = await getFilteredClusteringData(limit, vehicleType, accidentType);
       setClusterData(data);
       setError('');
     } catch (err) {
@@ -51,7 +57,7 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ limit = '100' }
     } finally {
       setLoading(false);
     }
-  }, [limit]);
+  }, [limit,vehicleType, accidentType]);
 
   useEffect(() => {
     fetchClusteringData();
@@ -211,7 +217,7 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ limit = '100' }
               <View style={[styles.legendColor, { backgroundColor: '#0000FF' }]} />
               <Text style={styles.legendText}>Normal Cluster</Text>
             </View>
-            <View style={styles.legendItem}>
+            {/* <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: '#00FF00' }]} />
               <Text style={styles.legendText}>Low Severity</Text>
             </View>
@@ -222,7 +228,7 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({ limit = '100' }
             <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: '#FF0000' }]} />
               <Text style={styles.legendText}>High Severity</Text>
-            </View>
+            </View> */}
           </View>
         </>
       )}

@@ -9,7 +9,7 @@ import {
   Platform
 } from 'react-native';
 import MapView, { Heatmap, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { getHeatMapData } from '../../services/accidentService';
+import { getFilteredHeatMapData, getHeatMapData } from '../../services/accidentService';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 import Geolocation from '@react-native-community/geolocation';
@@ -22,7 +22,9 @@ interface AccidentData {
 }
 
 interface AccidentHeatmapProps {
-  limit?: string;
+  limit?: number;
+  vehicleType?: string;
+  accidentType?: string;
 }
 
 const DEFAULT_REGION = {
@@ -42,7 +44,11 @@ const HEATMAP_CONFIG = {
   },
 };
 
-const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({ limit = '100' }) => {
+const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({
+  limit = 100,
+  vehicleType,
+  accidentType,
+}) => {
   const [accidentData, setAccidentData] = useState<AccidentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,7 +59,7 @@ const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({ limit = '100' }) => {
   const fetchHeatmapData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getHeatMapData(limit);
+      const data = await getFilteredHeatMapData(limit, vehicleType, accidentType);
       setAccidentData(data);
       console.log('refreshed');
       setError('');
@@ -63,7 +69,7 @@ const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({ limit = '100' }) => {
     } finally {
       setLoading(false);
     }
-  }, [limit]);
+  }, [limit,vehicleType, accidentType]);
 
     // Request location permission
   const requestLocationPermission = useCallback(async () => {

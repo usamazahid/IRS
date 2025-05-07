@@ -24,6 +24,7 @@ import AmbulanceStatsScreen from './src/screens/AmbulanceStatsScreen';
 import InvestigationForm from './src/screens/InvestigationForm';
 import { setupNetworkListener } from './src/services/OfflineService';
 import OfflineReportsScreen from './src/screens/OfflineReportsScreen';
+import AccidentAnalysisScreen from './src/screens/AccidentAnalysisScreen';
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
@@ -92,6 +93,16 @@ const App: React.FC = () => {
               </AuthGuard>
             )}
           </Stack.Screen>
+
+           
+          <Stack.Screen name="AccidentAnalysis">
+            {(props) => (
+              <AuthGuard {...props} requiredPermissions={['view_report']}>
+                <AccidentAnalysisScreen />
+              </AuthGuard>
+            )}
+          </Stack.Screen>
+          
           <Stack.Screen name="AmbulanceStats">
             {(props) => (
               <AuthGuard {...props} requiredPermissions={['ambulance_stats']}>

@@ -120,8 +120,8 @@ const HomeScreen = () => {
                 {
                     hasRequiredPermissions(permissions, ['view_report']) &&
                     (<CustomButton
-                        onPress={() => NavigationService.navigate('Report')}
-                        title='REPORT' />)
+                        onPress={() => NavigationService.navigate('AccidentAnalysis')}
+                        title='ACCIDENT ANALYSIS' />)
                 }
                 {
                     hasRequiredPermissions(permissions, ['view_offline_reports']) &&
