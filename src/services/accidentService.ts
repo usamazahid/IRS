@@ -10,7 +10,7 @@ export const submitAccidentReport = async (reportData: any) => {
       headers: {
         Accept: 'application/json',
         // 'Content-Type': 'multipart/form-data',// Use this for handling files (images, audio)
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
     });
     return response.data;
@@ -32,7 +32,7 @@ export const getReportData = async (userId: string,pageNumber: number,recordsPer
   try {
     // Construct the URL with query parameters
     const path = `${apiURL}/irs/getJoinedReportByUserId/${userId}?pageNumber=${pageNumber}&recordsPerPage=${recordsPerPage}`;
-    
+
     // Send GET request to the API
     const response = await axios.get(path, {
       headers: {
@@ -145,7 +145,7 @@ export const getFilteredHeatMapData = async (limit: number, vehicleType?: string
 export const getFilteredClusteringData = async (limit: number, vehicleType?: string, accidentType?: string,range?: string,) => {
   try {
     // Construct the API URL with query parameters
-    const path = `${apiURL}/irs/getClusteredAccidentsDBSCAN?limit=${limit}${vehicleType ? `&vehicleType=${vehicleType}` : ''}${accidentType ? `&accidentType=${accidentType}` : ''}${range ? `&range=${range}&`:''}`;
+    const path = `${apiURL}/irs/getClusteredAccidentsDBSCAN?limit=${limit}${vehicleType ? `&vehicleType=${vehicleType}` : ''}${accidentType ? `&accidentType=${accidentType}` : ''}${range ? `&range=${range}&` : ''}`;
     console.log('🗺️ Filtered Clustering URL:', path);
 
     // Send GET request to the API
@@ -169,4 +169,64 @@ export const getFilteredClusteringData = async (limit: number, vehicleType?: str
     }
     throw error;
   }
+};
+
+
+
+interface BBox { swLat: number; swLng: number; neLat: number; neLng: number; }
+
+export const getFilteredHeatMapDataWithBBox = async (
+  limit: number,
+  vehicleType?: string,
+  accidentType?: string,
+  startDate?: string,
+  endDate?: string,
+  severity?: string,
+  bbox?: BBox
+) => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (vehicleType) {params.append('vehicleType', vehicleType);}
+  if (accidentType) {params.append('accidentType', accidentType);}
+  if (startDate) {params.append('startDate', startDate);}
+  if (endDate) {params.append('endDate', endDate);}
+  if (severity) {params.append('severity', severity);}
+  if (bbox) {
+    params.append('swLat', String(bbox.swLat));
+    params.append('swLng', String(bbox.swLng));
+    params.append('neLat', String(bbox.neLat));
+    params.append('neLng', String(bbox.neLng));
+  }
+
+  const path = `${apiURL}/irs/heatmap?${params.toString()}`;
+  const response = await axios.get(path, { headers: { Accept: 'application/json' } });
+  return response.data;
+};
+
+export const getFilteredClusteringDataWithBBox = async (
+  limit: number,
+  vehicleType?: string,
+  accidentType?: string,
+  range?: string,
+  startDate?: string,
+  endDate?: string,
+  severity?: string,
+  bbox?: BBox
+) => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (vehicleType) {params.append('vehicleType', vehicleType);}
+  if (accidentType) {params.append('accidentType', accidentType);}
+  if (range) {params.append('range', range);}
+  if (startDate) {params.append('startDate', startDate);}
+  if (endDate) {params.append('endDate', endDate);}
+  if (severity) {params.append('severity', severity);}
+  if (bbox) {
+    params.append('swLat', String(bbox.swLat));
+    params.append('swLng', String(bbox.swLng));
+    params.append('neLat', String(bbox.neLat));
+    params.append('neLng', String(bbox.neLng));
+  }
+
+  const path = `${apiURL}/irs/getClusteredAccidentsDBSCAN?${params.toString()}`;
+  const response = await axios.get(path, { headers: { Accept: 'application/json' } });
+  return response.data;
 };

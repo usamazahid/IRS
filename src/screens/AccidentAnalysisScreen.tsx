@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text, SafeAreaView } from 'react-native';
-import FilterPanel from './components/FilterPanel';
-import FilteredAccidentHeatmap from './components/FilteredAccidentHeatmap';
-import FilteredAccidentClustering from './components/FilteredAccidentClustering';
+import FilterPanel from './components/FilterPanel'; 
 import NavigationService from '../context/NavigationService';
 import { ArrowLeftIcon } from 'react-native-heroicons/outline';
 import TopBar from './components/TopBarComponent';
