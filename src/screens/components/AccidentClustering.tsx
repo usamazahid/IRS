@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, StyleSheet, Dimensions, ActivityIndicator, Text, TouchableOpacity, Platform } from 'react-native';
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
-import { getClusteringData, getFilteredClusteringData } from '../../services/accidentService';
+import {getFilteredClusteringDataWithBBox } from '../../services/accidentService';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import Geolocation from '@react-native-community/geolocation';
 
@@ -33,12 +33,20 @@ interface AccidentClusteringProps {
   limit?: number;
   vehicleType?: string;
   accidentType?: string;
+  range?: string;
+  startDate?: string;
+  endDate?: string;
+  severity?: string;
 }
 
 const AccidentClustering: React.FC<AccidentClusteringProps> = ({
   limit = 100,
   vehicleType,
   accidentType,
+  range,
+  startDate,
+  endDate,
+  severity,
 }) => {
   const [clusterData, setClusterData] = useState<ClusterData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +56,15 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({
   const fetchClusteringData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getFilteredClusteringData(limit, vehicleType, accidentType);
+      const data = await getFilteredClusteringDataWithBBox(
+        limit,
+        vehicleType,
+        accidentType,
+        range,
+        startDate,
+        endDate,
+        severity
+      );
       setClusterData(data);
       setError('');
     } catch (err) {
@@ -57,7 +73,7 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [limit,vehicleType, accidentType]);
+  }, [limit, vehicleType, accidentType, range, startDate, endDate, severity]);
 
   useEffect(() => {
     fetchClusteringData();

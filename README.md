@@ -145,3 +145,6 @@ adb -s emulator-5554 forward tcp:8080 tcp:8080
 npx react-native-rename 'name will be changed' -b 'new'
 example:
 npx react-native-rename 'simple math' -b 'com.notjustdev'
+
+# autolinking issue
+remove build generated folders

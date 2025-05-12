@@ -1,25 +1,43 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text, SafeAreaView } from 'react-native';
-import FilterPanel from './components/FilterPanel'; 
+import FilterPanel from './components/FilterPanel';
 import NavigationService from '../context/NavigationService';
 import { ArrowLeftIcon } from 'react-native-heroicons/outline';
 import TopBar from './components/TopBarComponent';
 import AccidentHeatmap from './components/AccidentHeatmap';
 import AccidentClustering from './components/AccidentClustering';
 
+interface Filters {
+  vehicleType?: string;
+  accidentType?: string;
+  startDate?: string;
+  endDate?: string;
+  severity?: string;
+  range?: string;
+}
+
 const AccidentAnalysisScreen: React.FC = () => {
-  const [filters, setFilters] = useState<{ vehicleType?: string; accidentType?: string }>({});
+  const [filters, setFilters] = useState<Filters>({});
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [showClustering, setShowClustering] = useState(false);
 
-  const handleFilterChange = (newFilters: { vehicleType?: string; accidentType?: string }) => {
+  const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
+  };
+
+  const toggleView = (isHeatmap: boolean) => {
+    setShowHeatmap(isHeatmap);
+    setShowClustering(!isHeatmap);
+    // Clear range filter when switching to heatmap
+    if (isHeatmap && filters.range) {
+      setFilters(({ range: _unused, ...rest }) => rest);
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => NavigationService.goBack()}
         >
@@ -29,20 +47,24 @@ const AccidentAnalysisScreen: React.FC = () => {
       
       <TopBar title="Accident Analysis" />
       
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <FilterPanel onFilterChange={handleFilterChange} />
+        <FilterPanel
+          onFilterChange={handleFilterChange}
+          showVehicleType={true}
+          showAccidentType={true}
+          showDateRange={true}
+          showSeverity={true}
+          showRange={showClustering}
+        />
         
         <View style={styles.toggleContainer}>
           <TouchableOpacity
             style={[styles.toggleButton, showHeatmap && styles.activeToggle]}
-            onPress={() => {
-              setShowHeatmap(true);
-              setShowClustering(false);
-            }}
+            onPress={() => toggleView(true)}
           >
             <Text style={[styles.toggleText, showHeatmap && styles.activeToggleText]}>
               Heatmap View
@@ -51,10 +73,7 @@ const AccidentAnalysisScreen: React.FC = () => {
 
           <TouchableOpacity
             style={[styles.toggleButton, showClustering && styles.activeToggle]}
-            onPress={() => {
-              setShowHeatmap(false);
-              setShowClustering(true);
-            }}
+            onPress={() => toggleView(false)}
           >
             <Text style={[styles.toggleText, showClustering && styles.activeToggleText]}>
               Clustering View
@@ -65,15 +84,24 @@ const AccidentAnalysisScreen: React.FC = () => {
         <View style={styles.mapWrapper}>
           {showHeatmap && (
             <AccidentHeatmap
+              limit={100}
               vehicleType={filters.vehicleType}
               accidentType={filters.accidentType}
+              startDate={filters.startDate}
+              endDate={filters.endDate}
+              severity={filters.severity}
             />
           )}
 
           {showClustering && (
             <AccidentClustering
+              limit={100}
               vehicleType={filters.vehicleType}
               accidentType={filters.accidentType}
+              range={filters.range}
+              startDate={filters.startDate}
+              endDate={filters.endDate}
+              severity={filters.severity}
             />
           )}
         </View>
@@ -137,4 +165,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AccidentAnalysisScreen; 
+export default AccidentAnalysisScreen;

@@ -12,19 +12,21 @@ interface FilterOptions {
   startDate?: string;
   endDate?: string;
   severity?: string;
+  range?: string;
 }
+
 interface FilterPanelProps {
   onFilterChange: (filters: FilterOptions) => void;
-  // visibility flags
   showVehicleType?: boolean;
   showAccidentType?: boolean;
   showDateRange?: boolean;
   showSeverity?: boolean;
-  // disable flags
+  showRange?: boolean;
   disableVehicleType?: boolean;
   disableAccidentType?: boolean;
   disableDateRange?: boolean;
   disableSeverity?: boolean;
+  disableRange?: boolean;
 }
 
 interface DropdownItem {
@@ -38,16 +40,26 @@ const FILTER_SEVERITY = [
   { id: 'high', label: 'High (7-10)' },
 ];
 
+const FILTER_RANGES = [
+  { id: '100m', label: '100 meters' },
+  { id: '500m', label: '500 meters' },
+  { id: '1km', label: '1 kilometer' },
+  { id: '2km', label: '2 kilometers' },
+  { id: '5km', label: '5 kilometers' },
+];
+
 const FilterPanel: React.FC<FilterPanelProps> = ({
   onFilterChange,
   showVehicleType = true,
   showAccidentType = true,
   showDateRange = true,
   showSeverity = true,
+  showRange = false,
   disableVehicleType = false,
   disableAccidentType = false,
   disableDateRange = false,
   disableSeverity = false,
+  disableRange = false,
 }) => {
   const [filters, setFilters] = useState<FilterOptions>({});
   const dispatch = useDispatch<AppDispatch>();
@@ -97,7 +109,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             disabled={loading || disableAccidentType || !accidentTypes?.length}
             onItemSelect={(item: DropdownItem | null) => handleFilterChange('accidentType', item?.id)}
           />
-          )}
+        )}
         </View>
       </View>
 
@@ -117,19 +129,40 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         />
       </View>
       )}
+
       {showSeverity && (
-      <GenericDropDownMenu
-            data={FILTER_SEVERITY || []}
+      <View style={styles.row}>
+        <View style={styles.flex1}>
+          <GenericDropDownMenu
+            data={FILTER_SEVERITY}
             valueField="id"
             labelField="label"
             placeholder="Select Severity"
             value={filters.severity}
-            disabled={loading || disableSeverity || !FILTER_SEVERITY?.length}
+            disabled={loading || disableSeverity}
             onItemSelect={(item: DropdownItem | null) => handleFilterChange('severity', item?.id)}
           />
+        </View>
+      </View>
       )}
 
-      {(filters.vehicleType || filters.accidentType || filters.startDate || filters.endDate || filters.severity) && (
+      {showRange && (
+      <View style={styles.row}>
+        <View style={styles.flex1}>
+          <GenericDropDownMenu
+            data={FILTER_RANGES}
+            valueField="id"
+            labelField="label"
+            placeholder="Select Cluster Time Range"
+            value={filters.range}
+            disabled={loading || disableRange}
+            onItemSelect={(item: DropdownItem | null) => handleFilterChange('range', item?.id)}
+          />
+        </View>
+      </View>
+      )}
+
+      {(filters.vehicleType || filters.accidentType || filters.startDate || filters.endDate || filters.severity || filters.range) && (
         <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
           <Text style={styles.clearButtonText}>Clear Filters</Text>
         </TouchableOpacity>
@@ -145,7 +178,7 @@ const styles = StyleSheet.create({
   dateButton: { flex: 1, padding: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, alignItems: 'center', marginHorizontal: 4 },
   clearButton: { marginTop: 8, padding: 10, backgroundColor: '#f0f0f0', borderRadius: 4, alignItems: 'center' },
   clearButtonText: { color: '#666', fontSize: 14 },
-  dateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
 });
 
 export default FilterPanel;
