@@ -28,10 +28,6 @@ const AccidentAnalysisScreen: React.FC = () => {
   const toggleView = (isHeatmap: boolean) => {
     setShowHeatmap(isHeatmap);
     setShowClustering(!isHeatmap);
-    // Clear range filter when switching to heatmap
-    if (isHeatmap && filters.range) {
-      setFilters(({ range: _unused, ...rest }) => rest);
-    }
   };
 
   return (
@@ -58,7 +54,7 @@ const AccidentAnalysisScreen: React.FC = () => {
           showAccidentType={true}
           showDateRange={true}
           showSeverity={true}
-          showRange={showClustering}
+          showRange={false} // Always hide range since it's handled by backend
         />
         
         <View style={styles.toggleContainer}>

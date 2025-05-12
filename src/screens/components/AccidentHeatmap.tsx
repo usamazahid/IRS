@@ -183,9 +183,13 @@ const AccidentHeatmap: React.FC<AccidentHeatmapProps> = ({
     
     // Helper function for marker colors based on severity
     const getSeverityColor = (severity: number) => {
+      // Severity ranges match the filter panel ranges:
+      // Low: 1-3 (Green)
+      // Medium: 4-6 (Orange)
+      // High: 7-10 (Red)
       if (severity <= 3) return '#00ff00'; // Green for low severity
       if (severity <= 6) return '#ffa500'; // Orange for medium severity
-      return '#ff0000'; // Red for high severity
+      return '#ff0000'; // Red for high severity (7-10)
     };
 
 

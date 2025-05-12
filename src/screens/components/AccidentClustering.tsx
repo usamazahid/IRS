@@ -80,10 +80,15 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({
   }, [fetchClusteringData]);
 
   const getSeverityColor = (severity?: number) => {
+    // Severity ranges match the filter panel ranges:
+    // Unknown: Gray
+    // Low: 1-3 (Green)
+    // Medium: 4-6 (Orange)
+    // High: 7-10 (Red)
     if (!severity) return '#808080'; // Gray for unknown severity
     if (severity <= 3) return '#00ff00'; // Green for low severity
     if (severity <= 6) return '#ffa500'; // Orange for medium severity
-    return '#ff0000'; // Red for high severity
+    return '#ff0000'; // Red for high severity (7-10)
   };
 
   const handleZoomIn = () => {

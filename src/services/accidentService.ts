@@ -199,6 +199,7 @@ export const getFilteredHeatMapDataWithBBox = async (
 
   const path = `${apiURL}/irs/heatmap?${params.toString()}`;
   const response = await axios.get(path, { headers: { Accept: 'application/json' } });
+  console.log('Filtered HeatMap data:', response.data.length);
   return response.data;
 };
 
@@ -228,5 +229,6 @@ export const getFilteredClusteringDataWithBBox = async (
 
   const path = `${apiURL}/irs/getClusteredAccidentsDBSCAN?${params.toString()}`;
   const response = await axios.get(path, { headers: { Accept: 'application/json' } });
+  console.log('Filtered Clustering data:', response.data.length);
   return response.data;
 };

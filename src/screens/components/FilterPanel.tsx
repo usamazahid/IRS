@@ -35,17 +35,24 @@ interface DropdownItem {
 }
 
 const FILTER_SEVERITY = [
-  { id: 'low', label: 'Low (1-3)' },
-  { id: 'medium', label: 'Medium (4-6)' },
-  { id: 'high', label: 'High (7-10)' },
+  { id: 'low', label: 'Low Severity (1-3)' },
+  { id: 'medium', label: 'Medium Severity (4-6)' },
+  { id: 'high', label: 'High Severity (7-10)' },
 ];
 
 const FILTER_RANGES = [
-  { id: '100m', label: '100 meters' },
-  { id: '500m', label: '500 meters' },
-  { id: '1km', label: '1 kilometer' },
-  { id: '2km', label: '2 kilometers' },
-  { id: '5km', label: '5 kilometers' },
+  { id: '1m', label: '1 Minute' },
+  { id: '5m', label: '5 Minutes' },
+  { id: '15m', label: '15 Minutes' },
+  { id: '30m', label: '30 Minutes' },
+  { id: '1h', label: '1 Hour' },
+  { id: '6h', label: '6 Hours' },
+  { id: '12h', label: '12 Hours' },
+  { id: '1d', label: '1 Day' },
+  { id: '7d', label: '7 Days' },
+  { id: '1M', label: '1 Month' },
+  { id: '6M', label: '6 Months' },
+  { id: '1y', label: '1 Year' },
 ];
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
