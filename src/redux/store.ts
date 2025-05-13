@@ -1,9 +1,9 @@
 import {configureStore, combineReducers} from '@reduxjs/toolkit';
-import thunk from 'redux-thunk';
 import {persistStore, persistReducer} from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // For React Native storage
 import authReducer from './slices/authSlice';
 import dropdownReducer from './slices/dropdownSlice';
+import statisticsReducer from './slices/statisticsSlice';
 
 // Configurations for redux-persist
 const authPersistConfig = {
@@ -37,6 +37,7 @@ const dropdownPersistConfig = {
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
   dropdown: persistReducer(dropdownPersistConfig,dropdownReducer), // Non-persisted reducer
+  statistics: statisticsReducer, // Don't persist statistics data
 });
 
 const store = configureStore({

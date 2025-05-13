@@ -4,7 +4,7 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 interface DatePickerFieldProps {
   label?: string;
-  value?: string;                     // ISO‑date string, e.g. "2025-05-08"
+  value?: string;                     // ISO date string
   onChange: (date: Date) => void;
   disabled?: boolean;
   placeholder?: string;
@@ -23,17 +23,27 @@ const DatePickerField: React.FC<DatePickerFieldProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
-  const displayValue = value
-    ? new Date(value).toLocaleDateString()
-    : placeholder;
+  const getDisplayValue = () => {
+    if (!value) { return placeholder; }
+    const date = new Date(value);
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   const openPicker = () => {
-    if (!disabled) {setIsVisible(true);}
+    if (!disabled) {
+      setIsVisible(true);
+    }
   };
 
   const handleConfirm = (date: Date) => {
     setIsVisible(false);
-    onChange(date);
+    // Normalize the date to start of day in local timezone
+    const normalized = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    onChange(normalized);
   };
 
   const handleCancel = () => {
@@ -50,7 +60,7 @@ const DatePickerField: React.FC<DatePickerFieldProps> = ({
         disabled={disabled}
       >
         <Text style={[styles.text, !value && styles.placeholderText]}>
-          {displayValue}
+          {getDisplayValue()}
         </Text>
       </TouchableOpacity>
 
@@ -61,25 +71,44 @@ const DatePickerField: React.FC<DatePickerFieldProps> = ({
         onCancel={handleCancel}
         minimumDate={minimumDate}
         maximumDate={maximumDate}
+        date={value ? new Date(value) : new Date()}
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { marginVertical: 8, flex: 1 },
-  label: { fontSize: 14, marginBottom: 4, color: '#333' },
+  container: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  label: {
+    fontSize: 14,
+    marginBottom: 4,
+    color: '#333',
+    fontWeight: '500',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 4,
     paddingVertical: 10,
     paddingHorizontal: 12,
+    backgroundColor: '#fff',
+    height: 45,
     justifyContent: 'center',
   },
-  inputDisabled: { backgroundColor: '#f2f2f2' },
-  text: { fontSize: 16, color: '#000' },
-  placeholderText: { color: '#888' },
+  inputDisabled: {
+    backgroundColor: '#f2f2f2',
+    borderColor: '#ddd',
+  },
+  text: {
+    fontSize: 14,
+    color: '#333',
+  },
+  placeholderText: {
+    color: '#888',
+  },
 });
 
 export default DatePickerField;

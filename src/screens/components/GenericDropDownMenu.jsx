@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, StyleSheet, Text } from 'react-native';
+import { SafeAreaView, StyleSheet } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 
 const GenericDropDownMenu = ({
@@ -11,7 +11,7 @@ const GenericDropDownMenu = ({
   value: propValue,      // For pre-filled values
   disabled = false,      // Disable interaction
   disabledStyles = {},   // Custom disabled styling
-  searchable = true     // Enable/disable search
+  searchable = true,     // Enable/disable search
 }) => {
   const [selectedValue, setSelectedValue] = useState(null);
   const [safeData, setSafeData] = useState([]);
@@ -26,9 +26,13 @@ const GenericDropDownMenu = ({
 
   // Set initial value when prop or data changes
   useEffect(() => {
-    if (propValue !== undefined && safeData.length > 0) {
+    if (propValue === undefined) {
+      setSelectedValue(null);
+    } else if (safeData.length > 0) {
       const initialItem = safeData.find(item => item[valueField] === propValue);
-      if (initialItem) setSelectedValue(initialItem[valueField]);
+      if (initialItem) {
+        setSelectedValue(initialItem[valueField]);
+      }
     }
   }, [propValue, safeData, valueField]);
 
@@ -42,7 +46,7 @@ const GenericDropDownMenu = ({
   // Merge default disabled styles with custom ones
   const mergedDisabledStyles = {
     ...styles.disabledDropdown,
-    ...disabledStyles
+    ...disabledStyles,
   };
 
   return (
@@ -50,15 +54,15 @@ const GenericDropDownMenu = ({
       <Dropdown
         style={[
           styles.dropdown,
-          disabled && mergedDisabledStyles
+          disabled && mergedDisabledStyles,
         ]}
         placeholderStyle={[
           styles.placeholderStyle,
-          disabled && styles.disabledText
+          disabled && styles.disabledText,
         ]}
         selectedTextStyle={[
           styles.selectedTextStyle,
-          disabled && styles.disabledText
+          disabled && styles.disabledText,
         ]}
         inputSearchStyle={styles.inputSearchStyle}
         itemTextStyle={styles.textStyle}
@@ -73,7 +77,7 @@ const GenericDropDownMenu = ({
         onChange={handleSelect}
         disable={disabled}
         flatListProps={{
-          scrollEnabled: !disabled
+          scrollEnabled: !disabled,
         }}
       />
     </SafeAreaView>

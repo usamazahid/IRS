@@ -17,6 +17,7 @@ import CurrentActivityScreen from './src/screens/CurrentActivityScreen';
 import ManageActivityScreen from './src/screens/ManageActivityScreen';
 import SearchUserScreen from './src/screens/SearchUserScreen';
 import CreateUserScreen from './src/screens/CreateUserScreen';
+import AccidentStatisticsScreen from './src/screens/AccidentStatisticsScreen';
 
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SnackBarProvider } from './src/context/SnackBarContext';
@@ -152,6 +153,13 @@ const App: React.FC = () => {
               </AuthGuard>
             )}
           </Stack.Screen>
+          <Stack.Screen name="AccidentStatistics">
+            {(props) => (
+              <AuthGuard {...props} requiredPermissions={['view_report']}>
+                <AccidentStatisticsScreen />
+              </AuthGuard>
+            )}
+          </Stack.Screen>
           <Stack.Screen name="Confirmation" component={ConfirmationScreen} />
         </Stack.Navigator>
       </NavigationContainer>
@@ -163,4 +171,3 @@ const App: React.FC = () => {
 
 export default App;
 
- 

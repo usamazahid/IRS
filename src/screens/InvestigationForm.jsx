@@ -555,7 +555,6 @@ const InvestigationForm = ({ route }) => {
           />
 
           {/* Casualties Section */}
-          
            <Text className="text-xl font-bold my-2 text-gray-800">Casualties/Passengers/Injured</Text>
           <DynamicFormSection
             title="Add Casualties/Passengers"
@@ -566,7 +565,7 @@ const InvestigationForm = ({ route }) => {
               { label: 'Select Type', key: 'type', type: 'dropdown', data: casualtiesStatuses,labelField:'label',valueField: 'id' },
               { label: 'Name', key: 'name' },
               { label: 'Hospital', key: 'hospitalName' },
-              { label: 'Select Injury Severity', key: 'injurySeverity', injurySeverities,labelField:'label',valueField: 'label' }
+              { label: 'Select Injury Severity', key: 'injurySeverity',type: 'dropdown', data: injurySeverities,labelField:'label',valueField: 'id' }
             ]}
             onAdd={() => addArrayEntry('casualties', { type: '', name: '', hospitalName: '', injurySeverity: '' })}
             onUpdate={(index, key, value) => handleArrayUpdate('casualties', index, key, value)}

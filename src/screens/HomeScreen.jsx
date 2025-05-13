@@ -137,7 +137,13 @@ const HomeScreen = () => {
                         title='PROFILE'
                         variant='outlined' />)
                 }
-
+                {
+                    hasRequiredPermissions(permissions, ['view_report']) &&
+                    (<CustomButton
+                        onPress={() => NavigationService.navigate('AccidentStatistics')}
+                        title='ACCIDENT STATISTICS'
+                        variant='outlined' />)
+                }
                     <CustomButton
                         onPress={handleLogout}
                         title='LOGOUT'

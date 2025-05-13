@@ -6,6 +6,7 @@ export const submitAccidentReport = async (reportData: any) => {
   try {
     const path = `${apiURL}/irs/saveReportData`;
     console.log('🛠️ API_BASE_URL →', apiURL);
+    console.log('reportData →', reportData);
     const response = await axios.post(path, reportData, {
       headers: {
         Accept: 'application/json',
@@ -231,4 +232,68 @@ export const getFilteredClusteringDataWithBBox = async (
   const response = await axios.get(path, { headers: { Accept: 'application/json' } });
   console.log('Filtered Clustering data:', response.data.length);
   return response.data;
+};
+
+export interface StatisticsRequest {
+  startDate?: string;
+  endDate?: string;
+  range?: string;
+  interval?: string;
+}
+
+export interface ChartDataPoint {
+  label: string;
+  count: number;
+  avgSeverity: number;
+}
+
+export interface TimeSeriesDataPoint {
+  timePeriod: string;
+  totalCount: number;
+  fatalCount: number;
+  avgSeverity: number;
+  weatherRelatedCount: number;
+  roadConditionRelatedCount: number;
+}
+
+export interface StatisticsResponse {
+  accidentTypeDistribution: ChartDataPoint[];
+  vehicleTypeDistribution: ChartDataPoint[];
+  trends: TimeSeriesDataPoint[];
+}
+
+export const getAccidentStatistics = async (request: StatisticsRequest): Promise<StatisticsResponse> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    const response = await fetch(`${API_BASE_URL}/irs/statistics/overview`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch statistics: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error: unknown) {
+    console.error('Error fetching statistics:', error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('An unknown error occurred');
+  }
 };
