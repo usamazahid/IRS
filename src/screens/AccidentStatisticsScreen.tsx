@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -21,6 +21,11 @@ import type { FilterOptions } from './components/FilterPanel';
 
 const AccidentStatisticsScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const [visibleCharts, setVisibleCharts] = useState({
+    accidentType: true,
+    vehicleType: true,
+    trends: true,
+  });
   const { accidentTypeDistribution, vehicleTypeDistribution, trends, loading, error } = 
     useSelector((state: RootState) => state.statistics);
 
@@ -54,6 +59,13 @@ const AccidentStatisticsScreen: React.FC = () => {
       dispatch(clearStatistics());
     };
   }, [dispatch]);
+
+  const toggleChart = (chartName: keyof typeof visibleCharts) => {
+    setVisibleCharts(prev => ({
+      ...prev,
+      [chartName]: !prev[chartName],
+    }));
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -108,20 +120,65 @@ const AccidentStatisticsScreen: React.FC = () => {
           </View>
         ) : (
           <>
-            <PieChartCard
-              title="Accident Type Distribution"
-              data={accidentTypeDistribution}
-            />
-            
-            <PieChartCard
-              title="Vehicle Type Distribution"
-              data={vehicleTypeDistribution}
-            />
-            
-            <TimeSeriesChart
-              title="Accident Trends Over Time"
-              data={trends}
-            />
+            <View style={styles.chartSection}>
+              <View style={styles.chartHeader}>
+                <Text style={styles.chartTitle}>Accident Type Distribution</Text>
+                <TouchableOpacity 
+                  style={styles.chartToggleButton}
+                  onPress={() => toggleChart('accidentType')}
+                >
+                  <Text style={styles.chartToggleText}>
+                    {visibleCharts.accidentType ? 'Hide' : 'Show'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {visibleCharts.accidentType && (
+                <PieChartCard
+                  title=""
+                  data={accidentTypeDistribution}
+                />
+              )}
+            </View>
+
+            <View style={styles.chartSection}>
+              <View style={styles.chartHeader}>
+                <Text style={styles.chartTitle}>Vehicle Type Distribution</Text>
+                <TouchableOpacity 
+                  style={styles.chartToggleButton}
+                  onPress={() => toggleChart('vehicleType')}
+                >
+                  <Text style={styles.chartToggleText}>
+                    {visibleCharts.vehicleType ? 'Hide' : 'Show'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {visibleCharts.vehicleType && (
+                <PieChartCard
+                  title=""
+                  data={vehicleTypeDistribution}
+                />
+              )}
+            </View>
+
+            <View style={styles.chartSection}>
+              <View style={styles.chartHeader}>
+                <Text style={styles.chartTitle}>Accident Trends Over Time</Text>
+                <TouchableOpacity 
+                  style={styles.chartToggleButton}
+                  onPress={() => toggleChart('trends')}
+                >
+                  <Text style={styles.chartToggleText}>
+                    {visibleCharts.trends ? 'Hide' : 'Show'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {visibleCharts.trends && (
+                <TimeSeriesChart
+                  title=""
+                  data={trends}
+                />
+              )}
+            </View>
           </>
         )}
       </ScrollView>
@@ -148,6 +205,27 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 16,
+  },
+  toggleButton: {
+    padding: 12,
+    borderRadius: 6,
+    marginHorizontal: 8,
+    backgroundColor: '#e5e7eb',
+  },
+  activeToggle: {
+    backgroundColor: '#4F46E5',
+  },
+  toggleText: {
+    color: '#4F46E5',
+    fontWeight: '600',
+  },
+  activeToggleText: {
+    color: '#fff',
   },
   loadingOverlay: {
     padding: 16,
@@ -182,6 +260,40 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  chartSection: {
+    marginVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  chartTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  chartToggleButton: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  chartToggleText: {
+    color: '#4F46E5',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

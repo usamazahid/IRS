@@ -9,8 +9,9 @@ interface TimeSeriesChartProps {
 }
 
 const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ title, data }) => {
-  // Calculate minimum width needed per data point (75px per point)
-  const chartWidth = Math.max(Dimensions.get('window').width * 1.5, data.length * 75);
+  const screenWidth = Dimensions.get('window').width;
+  // Ensure minimum width for readability, accounting for padding
+  const chartWidth = Math.max(screenWidth - 64, data.length * 80);
   
   const formatXLabel = (label: string) => {
     try {
@@ -62,18 +63,27 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ title, data }) => {
         backgroundGradientFrom: '#ffffff',
         backgroundGradientTo: '#ffffff',
         decimalPlaces: 0,
-        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        color: (opacity = 1) => `rgba(31, 41, 55, ${opacity})`,
+        labelColor: (opacity = 1) => `rgba(31, 41, 55, ${opacity})`,
         style: {
           borderRadius: 16,
         },
         propsForDots: {
-          r: '4',
+          r: '6',
           strokeWidth: '2',
           stroke: '#ffa726',
         },
         propsForLabels: {
-          fontSize: 9,
+          fontSize: 12,
+          fontWeight: '600',
+        },
+        propsForVerticalLabels: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+        propsForHorizontalLabels: {
+          fontSize: 12,
+          fontWeight: '600',
         },
       }}
       bezier
@@ -111,11 +121,12 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ title, data }) => {
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       {data.length > 0 ? (
-        <View>
+        <View style={styles.chartWrapper}>
           <ScrollView
             horizontal={true}
             showsHorizontalScrollIndicator={true}
-            contentContainerStyle={styles.chartScrollContainer}>
+            contentContainerStyle={styles.chartScrollContainer}
+          >
             {renderChart()}
           </ScrollView>
           {renderLegend()}
@@ -131,50 +142,51 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ title, data }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 16,
-    margin: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    width: '100%',
+    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
+  },
+  chartWrapper: {
+    width: '100%',
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 16,
     textAlign: 'center',
-    color: '#333',
+    color: '#1f2937',
   },
   chartScrollContainer: {
-    paddingRight: 16,
+    paddingRight: 24,
   },
   chart: {
     marginVertical: 8,
+    paddingRight: 16,
     borderRadius: 16,
   },
   legendContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 24,
     gap: 16,
+    paddingHorizontal: 8,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginHorizontal: 8,
   },
   legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     marginRight: 8,
   },
   legendText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 14,
+    color: '#1f2937',
+    fontWeight: '500',
   },
   noDataContainer: {
     height: 220,
@@ -183,7 +195,7 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     fontSize: 16,
-    color: '#999',
+    color: '#6b7280',
   },
 });
 
