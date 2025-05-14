@@ -66,9 +66,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   const rangeOptions = [
     { id: '1w', label: 'Last Week' },
-    { id: '1m', label: 'Last Month' },
-    { id: '3m', label: 'Last 3 Months' },
-    { id: '6m', label: 'Last 6 Months' },
+    { id: '1M', label: 'Last Month' },
+    { id: '3M', label: 'Last 3 Months' },
+    { id: '6M', label: 'Last 6 Months' },
     { id: '1y', label: 'Last Year' },
   ];
 
