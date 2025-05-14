@@ -88,7 +88,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   }, [dispatch, loading, error, vehicleInvolved?.length, accidentTypes?.length]);
 
   const handleFilterChange = (type: keyof FilterOptions, value?: string) => {
-    const newFilters = { ...filters, [type]: value };
+    let formattedValue = value;
+    
+    // Format dates to YYYY-MM-DD
+    if ((type === 'startDate' || type === 'endDate') && value) {
+      formattedValue = value.split('T')[0];
+    }
+    
+    const newFilters = { ...filters, [type]: formattedValue };
     setFilters(newFilters);
     onFilterChange(newFilters);
   };
