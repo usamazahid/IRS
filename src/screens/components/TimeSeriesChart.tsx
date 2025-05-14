@@ -67,6 +67,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ title, data }) => {
         labelColor: (opacity = 1) => `rgba(31, 41, 55, ${opacity})`,
         style: {
           borderRadius: 16,
+          paddingLeft: 60,
+          paddingRight: 30,
         },
         propsForDots: {
           r: '6',
@@ -97,7 +99,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ title, data }) => {
       segments={5}
       formatYLabel={(value: string | number) => Math.round(Number(value)).toString()}
       xLabelsOffset={8}
-      yLabelsOffset={20}
+      yLabelsOffset={30}
+      withInnerLines={true}
+      withOuterLines={true}
+      withVerticalLabels={true}
+      withHorizontalLabels={true}
     />
   );
 
@@ -148,6 +154,7 @@ const styles = StyleSheet.create({
   },
   chartWrapper: {
     width: '100%',
+    paddingLeft: 8,
   },
   title: {
     fontSize: 18,
@@ -161,7 +168,6 @@ const styles = StyleSheet.create({
   },
   chart: {
     marginVertical: 8,
-    paddingRight: 16,
     borderRadius: 16,
   },
   legendContainer: {
