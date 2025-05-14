@@ -25,7 +25,7 @@ const PieChartCard: React.FC<PieChartCardProps> = ({ title, data }) => {
   const total = data.reduce((sum, item) => sum + item.count, 0);
   
   const chartData = data.map((item, index) => ({
-    name: item.label,
+    name: ` ${item.count} - ${item.label}`,
     population: item.count,
     color: colors[index % colors.length],
     legendFontColor: '#7F7F7F',
@@ -60,6 +60,7 @@ const PieChartCard: React.FC<PieChartCardProps> = ({ title, data }) => {
               backgroundColor="transparent"
               paddingLeft="0"
               absolute
+              hasLegend={false}
             />
             <View style={styles.legendContainer}>
               {chartData.map((item, index) => (
