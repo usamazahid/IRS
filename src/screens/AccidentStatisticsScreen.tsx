@@ -16,8 +16,92 @@ import PieChartCard from './components/PieChartCard';
 import TimeSeriesChart from './components/TimeSeriesChart';
 import FilterPanel from './components/FilterPanel';
 import { RootState, AppDispatch } from '../redux/store';
-import { fetchStatistics, clearStatistics } from '../redux/slices/statisticsSlice';
+import { fetchStatistics, clearStatistics, fetchInsights, clearInsights } from '../redux/slices/statisticsSlice';
 import type { FilterOptions } from './components/FilterPanel';
+
+interface InsightsSectionProps {
+  type: 'accidentType' | 'vehicleType' | 'trends' | 'comprehensive';
+  title: string;
+  comprehensive?: boolean;
+}
+
+const InsightsSection: React.FC<InsightsSectionProps> = ({ type, title, comprehensive = false }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const insights = useSelector((state: RootState) => state.statistics.insights[type]);
+  const loading = useSelector((state: RootState) => state.statistics.insightsLoading[type]);
+  const error = useSelector((state: RootState) => state.statistics.insightsError[type]);
+
+  const handleGenerateInsights = () => {
+    dispatch(fetchInsights({ type: comprehensive ? 'comprehensive' : type, comprehensive }));
+  };
+
+  const handleClearInsights = () => {
+    dispatch(clearInsights(type));
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.insightsLoading}>
+          <ActivityIndicator size="small" color="#4F46E5" />
+          <Text style={styles.insightsLoadingText}>Generating insights...</Text>
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.insightsError}>
+          <Text style={styles.insightsErrorText}>{error}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={handleGenerateInsights}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (insights) {
+      return (
+        <View style={styles.insightsContent}>
+          <View style={styles.insightsContentHeader}>
+            <View style={styles.insightsTextContainer}>
+              <Text style={styles.insightsText}>{insights}</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.clearButton}
+              onPress={handleClearInsights}
+            >
+              <Text style={styles.clearButtonText}>Clear</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <View style={styles.insightsSection}>
+      <View style={styles.insightsHeader}>
+        <Text style={styles.insightsTitle}>{title} Insights</Text>
+        <TouchableOpacity 
+          style={styles.generateButton}
+          onPress={handleGenerateInsights}
+          disabled={loading}
+        >
+          <Text style={styles.generateButtonText}>
+            {loading ? 'Generating...' : 'Generate Insights'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      {renderContent()}
+    </View>
+  );
+};
 
 const AccidentStatisticsScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -26,8 +110,13 @@ const AccidentStatisticsScreen: React.FC = () => {
     vehicleType: true,
     trends: true,
   });
-  const { accidentTypeDistribution, vehicleTypeDistribution, trends, loading, error } = 
-    useSelector((state: RootState) => state.statistics);
+  const { 
+    accidentTypeDistribution, 
+    vehicleTypeDistribution, 
+    trends, 
+    loading, 
+    error
+  } = useSelector((state: RootState) => state.statistics);
 
   const handleFilterChange = (filters: FilterOptions) => {
     // Only dispatch if we have at least one filter value
@@ -120,6 +209,12 @@ const AccidentStatisticsScreen: React.FC = () => {
           </View>
         ) : (
           <>
+            {/* Comprehensive Insights Section */}
+            <View style={[styles.chartSection, styles.comprehensiveSection]}>
+            {!loading && (<InsightsSection type="trends" title="Analysis" comprehensive={true} />)}
+            </View>
+
+            {/* Individual Chart Sections */}
             <View style={styles.chartSection}>
               <View style={styles.chartHeader}>
                 <Text style={styles.chartTitle}>Accident Type Distribution</Text>
@@ -133,10 +228,13 @@ const AccidentStatisticsScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
               {visibleCharts.accidentType && (
-                <PieChartCard
-                  title=""
-                  data={accidentTypeDistribution}
-                />
+                <>
+                  <PieChartCard
+                    title=""
+                    data={accidentTypeDistribution}
+                  />
+                 {!loading && (<InsightsSection type="accidentType" title="AI" />)}
+                </>
               )}
             </View>
 
@@ -153,10 +251,13 @@ const AccidentStatisticsScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
               {visibleCharts.vehicleType && (
-                <PieChartCard
-                  title=""
-                  data={vehicleTypeDistribution}
-                />
+                <>
+                  <PieChartCard
+                    title=""
+                    data={vehicleTypeDistribution}
+                  />
+                  {!loading && (<InsightsSection type="vehicleType" title="AI" />)}
+                </>
               )}
             </View>
 
@@ -173,10 +274,13 @@ const AccidentStatisticsScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
               {visibleCharts.trends && (
-                <TimeSeriesChart
-                  title=""
-                  data={trends}
-                />
+                <>
+                  <TimeSeriesChart
+                    title=""
+                    data={trends}
+                  />
+                  {!loading && (<InsightsSection type="trends" title="AI" />)}
+                </>
               )}
             </View>
           </>
@@ -294,6 +398,93 @@ const styles = StyleSheet.create({
     color: '#4F46E5',
     fontSize: 14,
     fontWeight: '500',
+  },
+  insightsSection: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  insightsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  insightsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  generateButton: {
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  generateButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  insightsLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  insightsLoadingText: {
+    marginLeft: 8,
+    color: '#6B7280',
+  },
+  insightsError: {
+    padding: 16,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+  },
+  insightsErrorText: {
+    color: '#DC2626',
+    marginBottom: 8,
+  },
+  insightsContent: {
+    padding: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+  },
+  insightsContentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  insightsTextContainer: {
+    flex: 1,
+  },
+  insightsText: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#374151',
+  },
+  clearButton: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  clearButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  comprehensiveSection: {
+    marginBottom: 24,
+    backgroundColor: '#F3F4F6',
   },
 });
 

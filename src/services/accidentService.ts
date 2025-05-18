@@ -297,3 +297,46 @@ export const getAccidentStatistics = async (request: StatisticsRequest): Promise
     throw new Error('An unknown error occurred');
   }
 };
+
+export interface InsightsResponse {
+  data: StatisticsResponse;
+  insight: string;
+}
+
+export const getAccidentInsights = async (data: StatisticsResponse): Promise<InsightsResponse> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    console.log('Sending data to insights API:', data);
+    const response = await fetch(`${API_BASE_URL}/irs/accident-insights/json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ data }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch insights: ${response.status} ${errorText}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Received insights response:', responseData);
+    return responseData;
+  } catch (error: unknown) {
+    console.error('Error fetching insights:', error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('An unknown error occurred');
+  }
+};
