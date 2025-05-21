@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'; // For Rea
 import authReducer from './slices/authSlice';
 import dropdownReducer from './slices/dropdownSlice';
 import statisticsReducer from './slices/statisticsSlice';
-
+import aiInsightReducer from './slices/aiInsightSlice';
 // Configurations for redux-persist
 const authPersistConfig = {
   key: 'auth',
@@ -38,6 +38,7 @@ const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
   dropdown: persistReducer(dropdownPersistConfig,dropdownReducer), // Non-persisted reducer
   statistics: statisticsReducer, // Don't persist statistics data
+  aiInsight: aiInsightReducer,
 });
 
 const store = configureStore({

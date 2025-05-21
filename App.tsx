@@ -18,6 +18,7 @@ import ManageActivityScreen from './src/screens/ManageActivityScreen';
 import SearchUserScreen from './src/screens/SearchUserScreen';
 import CreateUserScreen from './src/screens/CreateUserScreen';
 import AccidentStatisticsScreen from './src/screens/AccidentStatisticsScreen';
+import GeneratedAI from './src/screens/GeneratedAI';
 
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SnackBarProvider } from './src/context/SnackBarContext';
@@ -157,6 +158,13 @@ const App: React.FC = () => {
             {(props) => (
               <AuthGuard {...props} requiredPermissions={['view_report']}>
                 <AccidentStatisticsScreen />
+              </AuthGuard>
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="GeneratedAI">
+            {(props) => (
+              <AuthGuard {...props} requiredPermissions={['view_report']}>
+                <GeneratedAI />
               </AuthGuard>
             )}
           </Stack.Screen>

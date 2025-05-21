@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, BackHandler } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
@@ -15,23 +15,31 @@ import { hasRequiredPermissions } from '../utils/permissionUtils';
 import { logout } from '../redux/slices/authSlice'; // Adjust the path to where your authSlice is located
 import { resetLovs } from '../redux/slices/dropdownSlice'; // Adjust the path to where your authSlice is located
 import {useSnackBar} from '../context/SnackBarContext'
+
 const HomeScreen = () => {
     const { showSnackBar } = useSnackBar();
     const dispatch = useDispatch();
     const { user, role, permissions } = useSelector((state) => state.auth);
     const navigation = useNavigation();
+
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            // Return true to prevent default behavior (app exit)
+            return true;
+        });
+
+        return () => backHandler.remove();
+    }, []);
+
     const handleLogout = () => {
         dispatch(logout());
         dispatch(resetLovs()); 
         showSnackBar('Successful Logout');
         NavigationService.navigate('Login');
-      };
+    };
 
-      
     return (
-
         <View className="flex-1 bg-slate-200">
-
             {/* <SafeAreaView className="flex">
                 <View className="flex-row justify-start">
                     <TouchableOpacity className="p-2 ml-2"
@@ -117,12 +125,7 @@ const HomeScreen = () => {
                         title='HISTORY' />)
                 }
 
-                {
-                    hasRequiredPermissions(permissions, ['view_report']) &&
-                    (<CustomButton
-                        onPress={() => NavigationService.navigate('AccidentAnalysis')}
-                        title='ACCIDENT ANALYSIS' />)
-                }
+               
                 {
                     hasRequiredPermissions(permissions, ['view_offline_reports']) &&
                     (<CustomButton
@@ -140,8 +143,21 @@ const HomeScreen = () => {
                 {
                     hasRequiredPermissions(permissions, ['view_report']) &&
                     (<CustomButton
+                        onPress={() => NavigationService.navigate('AccidentAnalysis')}
+                        title='ACCIDENT ANALYSIS' />)
+                }
+                {
+                    hasRequiredPermissions(permissions, ['view_report']) &&
+                    (<CustomButton
                         onPress={() => NavigationService.navigate('AccidentStatistics')}
                         title='ACCIDENT STATISTICS'
+                        variant='outlined' />)
+                }
+                {
+                    hasRequiredPermissions(permissions, ['view_report']) &&
+                    (<CustomButton
+                        onPress={() => NavigationService.navigate('GeneratedAI')}
+                        title='AI INSIGHTS'
                         variant='outlined' />)
                 }
                     <CustomButton
@@ -150,7 +166,6 @@ const HomeScreen = () => {
                         variant='outlined' />
             </ScrollView>
         </View>
-
     );
 };
 
