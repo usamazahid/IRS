@@ -32,7 +32,11 @@ const InsightsSection: React.FC<InsightsSectionProps> = ({ type, title, comprehe
   const error = useSelector((state: RootState) => state.statistics.insightsError[type]);
 
   const handleGenerateInsights = () => {
-    dispatch(fetchInsights({ type: comprehensive ? 'comprehensive' : type, comprehensive }));
+    if (comprehensive) {
+      dispatch(fetchInsights({ type: 'comprehensive', comprehensive: true }));
+    } else {
+      dispatch(fetchInsights({ type, comprehensive: false }));
+    }
   };
 
   const handleClearInsights = () => {
@@ -94,7 +98,7 @@ const InsightsSection: React.FC<InsightsSectionProps> = ({ type, title, comprehe
           disabled={loading}
         >
           <Text style={styles.generateButtonText}>
-            {loading ? 'Generating...' : 'Generate Insights'}
+            {loading ? 'Generating...' : 'Generate'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -211,7 +215,7 @@ const AccidentStatisticsScreen: React.FC = () => {
           <>
             {/* Comprehensive Insights Section */}
             <View style={[styles.chartSection, styles.comprehensiveSection]}>
-            {!loading && (<InsightsSection type="trends" title="Analysis" comprehensive={true} />)}
+            {!loading && (<InsightsSection type="comprehensive" title="Comprehensive" comprehensive={true} />)}
             </View>
 
             {/* Individual Chart Sections */}

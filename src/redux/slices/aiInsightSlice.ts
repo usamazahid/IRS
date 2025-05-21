@@ -27,7 +27,7 @@ const initialState: AIInsightState = {
     "Top 5 accident locations by frequency",
     "Count of accidents by road surface condition",
     "Count of accidents where fitness certificate was expired",
-    "Count of \"Hit and Run\" accidents"
+    "Count of 'Hit and Run' accidents"
   ]
 };
 
