@@ -20,6 +20,8 @@ interface ClusterData {
   points: ClusterPoint[];
   pointsLength: number;
   isBlackSpot: boolean;
+  totalSeverity: number;
+  radius: number;
 }
 
 const DEFAULT_REGION = {
@@ -157,6 +159,24 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({
     );
   }, [requestLocationPermission]);
 
+  const getClusterRadius = (cluster: ClusterData) => {
+    // If radius is provided in the DTO, use it, otherwise use a default based on points length
+    if (cluster.radius > 0) {
+      return cluster.radius;
+    }
+    // Default radius based on number of points (in meters)
+    return Math.max(100, Math.min(1000, cluster.pointsLength * 50));
+  };
+
+  const getClusterColor = (cluster: ClusterData) => {
+    if (cluster.isBlackSpot) {
+      // Color intensity based on total severity
+      const intensity = Math.min(1, cluster.totalSeverity / 50);
+      return `rgba(255, 0, 0, ${0.3 + intensity * 0.4})`;
+    }
+    return 'rgba(0, 0, 255, 0.3)';
+  };
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -187,7 +207,7 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({
                 <Marker
                   coordinate={cluster.center}
                   title={`Cluster ${clusterIndex + 1}`}
-                  description={`${cluster.pointsLength} accidents`}
+                  description={`${cluster.pointsLength} accidents (Total Severity: ${cluster.totalSeverity})`}
                   pinColor={cluster.isBlackSpot ? "#FF0000" : "#0000FF"}
                 >
                   <View style={styles.clusterMarker}>
@@ -209,9 +229,9 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({
                 })}
                 <Circle
                   center={cluster.center}
-                  radius={500}
+                  radius={getClusterRadius(cluster)}
                   strokeColor={cluster.isBlackSpot ? "rgba(255,0,0,0.5)" : "rgba(0,0,255,0.5)"}
-                  fillColor={cluster.isBlackSpot ? "rgba(255,0,0,0.2)" : "rgba(0,0,255,0.2)"}
+                  fillColor={getClusterColor(cluster)}
                 />
               </React.Fragment>
             ))}
@@ -238,18 +258,18 @@ const AccidentClustering: React.FC<AccidentClusteringProps> = ({
               <View style={[styles.legendColor, { backgroundColor: '#0000FF' }]} />
               <Text style={styles.legendText}>Normal Cluster</Text>
             </View>
-            {/* <View style={styles.legendItem}>
+            <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: '#00FF00' }]} />
-              <Text style={styles.legendText}>Low Severity</Text>
+              <Text style={styles.legendText}>Low Severity (1-3)</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: '#FFA500' }]} />
-              <Text style={styles.legendText}>Medium Severity</Text>
+              <Text style={styles.legendText}>Medium Severity (4-6)</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: '#FF0000' }]} />
-              <Text style={styles.legendText}>High Severity</Text>
-            </View> */}
+              <Text style={styles.legendText}>High Severity (7-10)</Text>
+            </View>
           </View>
         </>
       )}
