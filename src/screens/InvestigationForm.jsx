@@ -17,7 +17,7 @@ import TopBar from './components/TopBarComponent';
 import MapComponent from './components/MapComponent';
 import CameraComponent from './components/CameraComponent';
 import { readAudioFileAsBase64 } from '../utils/AudioUtils';
-import { submitAccidentReport } from '../services/accidentService';
+import { submitAccidentReport, getAccidentDataById } from '../services/accidentService';
 import { compressImage,fillImageDto } from '../utils/ImageUtils';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAllLovs } from '../redux/slices/dropdownSlice'; // Import the action
@@ -34,7 +34,7 @@ const InvestigationForm = ({ route }) => {
   const dispatch = useDispatch();
 
  // navigation params for view-mode
-  const { initialData = null, editable: editableFlag = true,isUpdateData: isUpdateDataFlag = false } = route.params || {};
+  const { initialData = null, editable: editableFlag = true, isUpdateData: isUpdateDataFlag = false, isApiCallRequired = false, reportId = null } = route.params || {};
   const editable = Boolean(editableFlag);
   const isUpdateData = Boolean(isUpdateDataFlag);
 
@@ -121,15 +121,117 @@ const InvestigationForm = ({ route }) => {
 
   // initialize from initialData if view-mode
   useEffect(() => {
-    if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }));
-      if (initialData.latitude && initialData.longitude) {
-        setMapLocation({ latitude: initialData.latitude, longitude: initialData.longitude });
+    const loadReportData = async () => {
+      if (initialData) {
+        console.log('=== loadReportData called (InvestigationForm) ===');
+        console.log('isApiCallRequired:', isApiCallRequired);
+        console.log('reportId:', reportId);
+        
+        // Check if API call is required
+        if (isApiCallRequired && reportId) {
+          try {
+            console.log('Fetching full report data for reportId:', reportId);
+            const response = await getAccidentDataById(reportId);
+            // console.log('API Response:', response);
+            
+            const fullReportData = response;
+            console.log('Full report data to be set:', fullReportData);
+            console.log('Latitude:', fullReportData.latitude, 'Longitude:', fullReportData.longitude);
+            
+            // Update map location first
+            if (fullReportData.latitude && fullReportData.longitude) {
+              console.log('Setting map location');
+              setMapLocation({ 
+                latitude: fullReportData.latitude, 
+                longitude: fullReportData.longitude 
+              });
+            }
+            
+            // Update captured images 
+            
+            // Extract image URIs from imageDTOs - convert base64 to data URI
+            let imageUris = [];
+            if (fullReportData.imageDTOs && Array.isArray(fullReportData.imageDTOs)) {
+              // Convert base64 imageData to data URIs for display
+              imageUris = fullReportData.imageDTOs
+                .filter(img => img.imageData)
+                .map(img => `data:image/jpeg;base64,${img.imageData}`);
+              console.log('Converted base64 to data URIs, count:', imageUris.length);
+            } else if (fullReportData.imageUris && Array.isArray(fullReportData.imageUris)) {
+              imageUris = fullReportData.imageUris;
+              console.log('Using imageUris directly:', imageUris);
+            }
+            
+            if (imageUris.length > 0) {
+              console.log('Setting captured images with', imageUris.length, 'images');
+              setCapturedImages(imageUris);
+            }
+            
+            // Update report key
+            if (fullReportData.createdAt) {
+              console.log('Setting report key:', fullReportData.createdAt);
+              setReportKey(fullReportData.createdAt);
+            }
+            
+            // Convert audioData to data URI if present
+            let audioUri = fullReportData.audioUri;
+            if (fullReportData.audioData) {
+              // Convert base64 audio to data URI
+              audioUri = `data:audio/mp4;base64,${fullReportData.audioData}`;
+              console.log('Converted audio base64 to data URI');
+            }
+            
+            // Merge with initial data and set form data
+            console.log('Setting form data with full report data');
+            setFormData({ 
+              ...fullReportData,
+              imageUris: imageUris,
+              audioUri: audioUri,
+              evidence: fullReportData.evidence || {
+                photosTaken: false,
+                videosRecorded: false,
+                sketchPrepared: false,
+              },
+              userId: user.id,
+              viewOfflineReport: hasRequiredPermissions(permissions, ['view_offline_reports']),
+              useCase: 'InvestigationForm',
+            });
+            
+            console.log('Form data updated successfully');
+          } catch (error) {
+            console.error('Error fetching report data:', error);
+            Alert.alert('Error', 'Failed to load full report data');
+          }
+        } else {
+          console.log('Using initialData directly (no API call)');
+          // Use initialData directly
+          setFormData(prev => ({ 
+            ...prev, 
+            ...initialData,
+            evidence: initialData.evidence || {
+              photosTaken: false,
+              videosRecorded: false,
+              sketchPrepared: false
+            }
+          }));
+          
+          if (initialData.latitude && initialData.longitude) {
+            setMapLocation({ 
+              latitude: initialData.latitude, 
+              longitude: initialData.longitude 
+            });
+          }
+          setCapturedImages(initialData.imageUris || []);
+          setReportKey(initialData.createdAt);
+        }
+      } else {
+        console.log('No initialData provided');
       }
-      setCapturedImages(initialData.imageUris || []);
-      setReportKey(initialData.createdAt);
-    }
-  }, [initialData]);
+    };
+    
+    loadReportData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData, isApiCallRequired, reportId]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -649,7 +751,6 @@ const InvestigationForm = ({ route }) => {
             onRemove={(index) => handleArrayRemove('followUp', index)}
 
           /> */}
-
        {/* Evidence Section */}
           <Text className="text-xl font-bold my-2 text-gray-800">Evidence Collection</Text>
           <View className="flex-row justify-between mb-4">

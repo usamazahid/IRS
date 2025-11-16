@@ -58,6 +58,36 @@ export const getReportData = async (userId: string,pageNumber: number,recordsPer
 };
 
 
+export const getAccidentDataById = async (reportId: string) => {
+  try {
+    // Construct the URL with query parameters
+    const path = `${apiURL}/irs/getJoinedReportById/${reportId}?isFile=${true}`;
+
+    // Send GET request to the API
+    const response = await axios.get(path, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+    console.log('Response length:', response.data);
+    // Return the response data
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      console.error('Response Error:', error.response.data);
+      console.error('Status Code:', error.response.status);
+      console.error('Headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('Request Error:', error.request);
+    } else {
+      console.error('Error:', error.message);
+    }
+    throw error;
+  }
+};
+
+
+
 export const getHeatMapData = async (limit: string) => {
   try {
     // Construct the API URL with limit query parameter

@@ -7,10 +7,11 @@ import TopBar from './components/TopBarComponent';
 import { useSelector } from 'react-redux';
 import { getReportData } from '../services/accidentService';
 
+import { hasRequiredPermissions } from '../utils/permissionUtils';
 const recordsPerPage = 20;
 
 const HistoryScreen = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { user, role, permissions } = useSelector((state) => state.auth);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState([]);
   const [reportData, setReportData] = useState([]);
@@ -82,6 +83,23 @@ const HistoryScreen = () => {
     setModalVisible(true);
   };
 
+   const viewReportFullReport = (report) => {
+     const defaultValues = {
+       initialData: report,
+       isApiCallRequired: true,
+       editable: false,
+       isUpdateData:false,
+       reportId:report.id,
+       returnId: report.createdAt
+      }
+     if( hasRequiredPermissions(permissions, ['investigation_form']) ){
+        NavigationService.navigate('InvestigationForm',defaultValues );
+     } else{
+        NavigationService.navigate('ReportAccident',defaultValues );
+     }
+   };
+
+
   const renderPanel = ({ item }) => (
     <TouchableOpacity
       className="bg-gray-100 p-4 rounded-lg mb-2"
@@ -130,7 +148,7 @@ const HistoryScreen = () => {
         />
 
         <FlatList
-          contentContainerStyle={{ paddingHorizontal: 16 }}
+          contentContainerStyle={styles.listContentContainer}
           data={filteredData}
           keyExtractor={(item, index) => `${item.id}-${index}`}
           renderItem={renderPanel}
@@ -175,6 +193,18 @@ const HistoryScreen = () => {
                     <Text style={styles.modalLabel}>Created At:</Text> {selectedItem.createdAt}
                   </Text>
                 </ScrollView>
+                <TouchableOpacity
+                  style={styles.viewFullButton}
+                  onPress={() => {
+                    console.log('=== View Full Report button pressed ===');
+                    console.log('Selected item:', selectedItem);
+                    console.log('Closing modal and navigating...');
+                    setModalVisible(false);
+                    viewReportFullReport(selectedItem);
+                  }}
+                >
+                  <Text style={styles.viewFullButtonText}>View Full Report</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.closeButton}
                   onPress={() => setModalVisible(false)}
@@ -223,8 +253,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'black',
   },
+  viewFullButton: {
+    marginTop: 15,
+    backgroundColor: '#6A5ACD',
+    borderRadius: 5,
+    padding: 10,
+    alignItems: 'center',
+  },
+  viewFullButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
   closeButton: {
-    marginTop: 20,
+    marginTop: 10,
     backgroundColor: '#007bff',
     borderRadius: 5,
     padding: 10,
@@ -233,6 +275,9 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  listContentContainer: {
+    paddingHorizontal: 16,
   },
 });
 
